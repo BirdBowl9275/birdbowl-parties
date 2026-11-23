@@ -49,7 +49,8 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
   }
 
   // Admins cannot remove or demote themselves, so they can't lock out the last admin by accident.
-  if (input.actorId === input.targetId) {
+  // Compare case-insensitively: Postgres matches a UUID in any case (security verifier WEB-BULK-06).
+  if (input.actorId.toLowerCase() === input.targetId.toLowerCase()) {
     if (input.status !== 'active' || input.role !== 'admin') {
       return { ok: false, error: 'You cannot change your own role or status here.' };
     }
@@ -59,6 +60,38 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
     ok: true,
     value: { role: input.role as Role, status: input.status as Status, tier, dailyCap: cap },
   };
+}
+
+// "Save all changes" on Admin → Users: several rows at once. Every row is checked before anything
+// is written, so a bad row saves nothing. Removing someone is never done in bulk: it keeps its own
+// confirm step on the row's Save.
+export const BULK_MAX = 100;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type BulkEntry = { id: string; role: string; status: string; tier: string; dailyCap: string };
+export type ValidProfileChange = { id: string; role: Role; status: Status; tier: number | null; dailyCap: number };
+
+export function validateBulkProfileChanges(
+  entries: BulkEntry[],
+  actorId: string,
+): ValidationResult<ValidProfileChange[]> {
+  if (entries.length === 0) return { ok: false, error: 'There are no changes to save.' };
+  if (entries.length > BULK_MAX) return { ok: false, error: `Save at most ${BULK_MAX} users at a time.` };
+
+  const seen = new Set<string>();
+  const out: ValidProfileChange[] = [];
+  for (const raw of entries) {
+    const e = { ...raw, id: raw.id.toLowerCase() };
+    if (!UUID.test(e.id) || seen.has(e.id)) return { ok: false, error: 'Unknown user. Nothing was saved.' };
+    seen.add(e.id);
+    if (e.status === 'removed') {
+      return { ok: false, error: "Nothing was saved. To remove someone, use Save on that person's row." };
+    }
+    const r = validateProfileChange({ ...e, actorId, targetId: e.id });
+    if (!r.ok) return { ok: false, error: `Nothing was saved. ${r.error}` };
+    out.push({ id: e.id, ...r.value });
+  }
+  return { ok: true, value: out };
 }
 
 const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;

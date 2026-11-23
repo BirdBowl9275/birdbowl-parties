@@ -2,7 +2,13 @@
 
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/admin-guard';
-import { validateProfileChange, validateSetting } from '@/lib/admin';
+import {
+  BULK_MAX,
+  validateBulkProfileChanges,
+  validateProfileChange,
+  validateSetting,
+  type ValidProfileChange,
+} from '@/lib/admin';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -19,7 +25,7 @@ export async function updateProfile(formData: FormData) {
   const path = '/admin/users';
   const { supabase, user } = await requireAdmin();
 
-  const targetId = field(formData, 'id');
+  const targetId = field(formData, 'id').toLowerCase();
   if (!UUID.test(targetId)) back(path, 'Unknown user.');
 
   const parsed = validateProfileChange({
@@ -33,26 +39,81 @@ export async function updateProfile(formData: FormData) {
   if (!parsed.ok) back(path, parsed.error);
   const v = parsed.value;
 
+  const result = await saveProfile(supabase, user.id, { id: targetId, ...v });
+  if (result === 'error') back(path, 'Could not save that change.');
+  if (result === 'missing') back(path, 'That user was not found.');
+
+  // Say which row was saved, and jump back to it, so the row itself can confirm the save.
+  // `at` makes the saved row start fresh, so its button shows "Saved" even after earlier edits.
+  redirect(`${path}?msg=${encodeURIComponent('Saved.')}&saved=${targetId}&at=${Date.now()}#user-${targetId}`);
+}
+
+type Supabase = Awaited<ReturnType<typeof requireAdmin>>['supabase'];
+
+async function saveProfile(
+  supabase: Supabase,
+  actorId: string,
+  v: ValidProfileChange,
+): Promise<'ok' | 'error' | 'missing'> {
   // RLS allows this only for admins. The guard trigger also checks it in the database.
   const { data, error } = await supabase
     .from('profiles')
     .update({ role: v.role, status: v.status, tier: v.tier, daily_cap: v.dailyCap })
-    .eq('id', targetId)
+    .eq('id', v.id)
     .select('id');
-  if (error) back(path, 'Could not save that change.');
-  if (!data || data.length === 0) back(path, 'That user was not found.');
+  if (error) return 'error';
+  if (!data || data.length === 0) return 'missing';
 
   if (v.status === 'active') {
     // Record the approval once, the first time the person becomes active.
     await supabase
       .from('profiles')
-      .update({ approved_at: new Date().toISOString(), approved_by: user.id })
-      .eq('id', targetId)
+      .update({ approved_at: new Date().toISOString(), approved_by: actorId })
+      .eq('id', v.id)
       .is('approved_at', null);
   }
+  return 'ok';
+}
 
-  // Say which row was saved, and jump back to it, so the row itself can confirm the save.
-  redirect(`${path}?msg=${encodeURIComponent('Saved.')}&saved=${targetId}#user-${targetId}`);
+// "Save all changes": every edited row in one go. All rows are validated first, so one bad row
+// saves nothing. Rows are then written one by one with the same checks as a single Save.
+export async function updateProfiles(formData: FormData) {
+  const path = '/admin/users';
+  const { supabase, user } = await requireAdmin();
+
+  const ids = formData.getAll('id');
+  const roles = formData.getAll('role');
+  const statuses = formData.getAll('status');
+  const tiers = formData.getAll('tier');
+  const caps = formData.getAll('daily_cap');
+  const n = ids.length;
+  if ([roles, statuses, tiers, caps].some((list) => list.length !== n)) back(path, 'Nothing was saved. Try again.');
+  if (n > BULK_MAX) back(path, `Save at most ${BULK_MAX} users at a time.`);
+
+  const str = (x: FormDataEntryValue) => (typeof x === 'string' ? x : '');
+  const parsed = validateBulkProfileChanges(
+    ids.map((id, i) => ({
+      id: str(id),
+      role: str(roles[i]),
+      status: str(statuses[i]),
+      tier: str(tiers[i]),
+      dailyCap: str(caps[i]),
+    })),
+    user.id,
+  );
+  if (!parsed.ok) back(path, parsed.error);
+
+  const saved: string[] = [];
+  for (const v of parsed.value) {
+    if ((await saveProfile(supabase, user.id, v)) === 'ok') saved.push(v.id);
+  }
+
+  const total = parsed.value.length;
+  const msg =
+    saved.length === total
+      ? `Saved ${total} ${total === 1 ? 'user' : 'users'}.`
+      : `Saved ${saved.length} of ${total} users. The others could not be saved; check them and try again.`;
+  redirect(`${path}?msg=${encodeURIComponent(msg)}&saved=${saved.join(',')}&at=${Date.now()}`);
 }
 
 export async function updateSetting(formData: FormData) {

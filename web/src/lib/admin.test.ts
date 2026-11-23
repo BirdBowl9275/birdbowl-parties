@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateProfileChange, validateSetting } from './admin';
+import { BULK_MAX, validateBulkProfileChanges, validateProfileChange, validateSetting } from './admin';
 
 const base = { role: 'staff', status: 'active', tier: '1', dailyCap: '3', actorId: 'a', targetId: 'b' };
 
@@ -44,6 +44,51 @@ describe('validateProfileChange', () => {
     expect(validateProfileChange({ ...self, status: 'removed' }).ok).toBe(false);
     expect(validateProfileChange({ ...self, role: 'manager' }).ok).toBe(false);
     expect(validateProfileChange(self).ok).toBe(true);
+  });
+});
+
+describe('validateBulkProfileChanges', () => {
+  const A = '11111111-1111-4111-8111-111111111111';
+  const B = '22222222-2222-4222-8222-222222222222';
+  const row = { id: A, role: 'sales', status: 'active', tier: '', dailyCap: '0' };
+
+  it('accepts several valid rows', () => {
+    const r = validateBulkProfileChanges([row, { ...row, id: B, role: 'viewer' }], 'admin');
+    expect(r.ok && r.value.map((v) => v.role)).toEqual(['sales', 'viewer']);
+  });
+
+  it('rejects an empty list and too many rows', () => {
+    expect(validateBulkProfileChanges([], 'admin').ok).toBe(false);
+    const many = Array.from({ length: BULK_MAX + 1 }, (_, i) => ({
+      ...row,
+      id: `${String(i).padStart(8, '0')}-1111-4111-8111-111111111111`,
+    }));
+    expect(validateBulkProfileChanges(many, 'admin').ok).toBe(false);
+  });
+
+  it('rejects duplicate or malformed ids', () => {
+    expect(validateBulkProfileChanges([row, row], 'admin').ok).toBe(false);
+    expect(validateBulkProfileChanges([{ ...row, id: 'nope' }], 'admin').ok).toBe(false);
+  });
+
+  it('never removes anyone in bulk', () => {
+    expect(validateBulkProfileChanges([{ ...row, status: 'removed' }], 'admin').ok).toBe(false);
+  });
+
+  it('saves nothing if one row is invalid', () => {
+    const r = validateBulkProfileChanges([row, { ...row, id: B, role: 'viewer', tier: '1' }], 'admin');
+    expect(r.ok).toBe(false);
+  });
+
+  it('still stops an admin demoting themselves', () => {
+    expect(validateBulkProfileChanges([{ ...row, role: 'manager' }], A).ok).toBe(false);
+  });
+
+  it('is not fooled by an uppercase copy of the same id', () => {
+    const C = 'abcdef12-1111-4111-8111-111111111111';
+    expect(validateBulkProfileChanges([{ ...row, id: C.toUpperCase(), role: 'manager' }], C).ok).toBe(false);
+    expect(validateBulkProfileChanges([{ ...row, id: C }, { ...row, id: C.toUpperCase() }], 'admin').ok).toBe(false);
+    expect(validateProfileChange({ ...base, actorId: C, targetId: C.toUpperCase(), role: 'staff' }).ok).toBe(false);
   });
 });
 

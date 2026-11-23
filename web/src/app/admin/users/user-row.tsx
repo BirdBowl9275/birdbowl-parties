@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ROLES, STATUSES } from '@/lib/admin';
+import { useUsersEditor } from './users-editor';
 import { Ban, Check, Clock } from '../../components/icons';
 
 export type UserRowData = {
@@ -29,11 +30,14 @@ export function UserRow({
   action,
   row,
   justSaved = false,
+  scrollOnSave = true,
 }: {
   action: (formData: FormData) => Promise<void>;
   row: UserRowData;
   // True right after this row was saved: the Save button shows a green "Saved" until edited again.
   justSaved?: boolean;
+  // Scroll the saved row into view (single-row saves only; "Save all" stays at the top).
+  scrollOnSave?: boolean;
 }) {
   // Pending rows lead with the email: approve on the address, never on the typed name, which the
   // inviter chose and the person can change (security verifier on WEB-INV-01).
@@ -62,10 +66,44 @@ export function UserRow({
   // After a save the page reloads at the top; bring the saved row back into view.
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (!justSaved) return;
+    if (!justSaved || !scrollOnSave) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     formRef.current?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
-  }, [justSaved]);
+  }, [justSaved, scrollOnSave]);
+
+  // Tell the page-level "Save all changes" bar whether this row differs from what is saved.
+  const editor = useUsersEditor();
+  const original = useMemo(
+    () => ({
+      status: row.status,
+      role: row.role,
+      tier: row.tier === null ? '' : String(row.tier),
+      daily_cap: String(row.daily_cap),
+    }),
+    [row.status, row.role, row.tier, row.daily_cap],
+  );
+  function checkDirty() {
+    const form = formRef.current;
+    if (!form) return;
+    const data = new FormData(form);
+    const changed = (Object.keys(original) as (keyof typeof original)[]).some((k) => data.get(k) !== original[k]);
+    setDirty(changed);
+    editor?.setRowDirty(row.id, changed ? { form } : null);
+  }
+
+  // "Discard" on the bar puts every row back to its saved values.
+  const discardToken = editor?.discardToken ?? 0;
+  useEffect(() => {
+    if (discardToken === 0) return;
+    formRef.current?.reset();
+    setConfirming(false);
+    setDirty(false);
+    editor?.setRowDirty(row.id, null);
+  }, [discardToken]); // only when Discard is pressed
+
+  // Forget this row's edits when it unmounts (for example after it was saved).
+  const setRowDirty = editor?.setRowDirty;
+  useEffect(() => () => setRowDirty?.(row.id, null), [setRowDirty, row.id]);
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     const submitter = (e.nativeEvent as SubmitEvent).submitter;
@@ -83,6 +121,7 @@ export function UserRow({
   function keep() {
     if (statusRef.current) statusRef.current.value = row.status;
     setConfirming(false);
+    checkDirty();
     statusRef.current?.focus();
   }
 
@@ -111,7 +150,7 @@ export function UserRow({
       className={row.status === 'removed' ? 'urow removed' : 'urow'}
       aria-label={`Edit ${label}`}
       onSubmit={onSubmit}
-      onChange={() => setDirty(true)}
+      onChange={checkDirty}
       id={`user-${row.id}`}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && confirming) keep();

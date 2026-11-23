@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
-import { updateProfile } from '../actions';
+import { BULK_MAX } from '@/lib/admin';
+import { updateProfile, updateProfiles } from '../actions';
 import { CircleAlert, Info } from '../../components/icons';
 import { UserRow, type UserRowData } from './user-row';
+import { UsersEditor } from './users-editor';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,9 +27,19 @@ function UsersHead() {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ msg?: string; saved?: string }>;
+  searchParams: Promise<{ msg?: string; saved?: string; at?: string }>;
 }) {
-  const { msg, saved } = await searchParams;
+  const { msg, saved, at } = await searchParams;
+  // Rows just saved (one, or several from "Save all"). They get a fresh key so they start clean.
+  const savedIds = new Set(
+    (saved ?? '')
+      .split(',')
+      .slice(0, BULK_MAX)
+      .filter((s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)),
+  );
+  const saveKey = /^\d{1,15}$/.test(at ?? '') ? at : '';
+  const rowKey = (id: string) => (savedIds.has(id) ? `${id}:${saveKey}` : id);
+  const single = savedIds.size === 1;
   const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
@@ -67,6 +79,7 @@ export default async function AdminUsersPage({
         </div>
       ) : null}
 
+      <UsersEditor action={updateProfiles}>
       <div className={pending.length > 0 ? 'admin-section admin-pending' : 'admin-section'}>
         <h2 id="pending-title">Pending approval ({pending.length})</h2>
         {pending.length === 0 ? <p className="empty">No requests waiting.</p> : null}
@@ -75,8 +88,8 @@ export default async function AdminUsersPage({
             <UsersHead />
             <ul className="ulist" aria-labelledby="pending-title">
               {pending.map((r) => (
-                <li key={r.id}>
-                  <UserRow action={updateProfile} row={r} justSaved={r.id === saved} />
+                <li key={rowKey(r.id)}>
+                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} scrollOnSave={single} />
                 </li>
               ))}
             </ul>
@@ -91,14 +104,15 @@ export default async function AdminUsersPage({
             <UsersHead />
             <ul className="ulist" aria-labelledby="others-title">
               {others.map((r) => (
-                <li key={r.id}>
-                  <UserRow action={updateProfile} row={r} justSaved={r.id === saved} />
+                <li key={rowKey(r.id)}>
+                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} scrollOnSave={single} />
                 </li>
               ))}
             </ul>
           </>
         ) : null}
       </div>
+      </UsersEditor>
     </section>
   );
 }
