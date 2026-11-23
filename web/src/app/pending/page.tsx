@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { AuthCard } from '../components/auth-card';
 import { SetNameForm } from './set-name-form';
 
 // Shown to signed-in people who are not approved yet. Middleware keeps them here.
@@ -19,17 +20,16 @@ export default async function PendingPage() {
   if (profile?.status === 'active') redirect('/app');
 
   return (
-    <section className="card" aria-labelledby="pending-title">
-      <h1 id="pending-title">Request received</h1>
-      <p>
+    <AuthCard titleId="pending-title" title="Request received">
+      <p className="auth-lede">
         An admin has to approve your access before you can see anything. You will be able to
         sign in and see your schedule once that happens.
       </p>
       <SetNameForm currentName={profile?.full_name ?? ''} />
-      <form action="/auth/signout" method="post">
-        <button type="submit" className="secondary">Sign out</button>
+      <form action="/auth/signout" method="post" className="auth-signout">
+        <button type="submit" className="btn-ghost">Sign out</button>
       </form>
-    </section>
+    </AuthCard>
   );
 }
 

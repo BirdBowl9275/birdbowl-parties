@@ -1,3 +1,5 @@
+import { AuthCard } from '../components/auth-card';
+import { CircleAlert } from '../components/icons';
 import { LoginForm } from './login-form';
 
 export default async function LoginPage({
@@ -7,14 +9,16 @@ export default async function LoginPage({
 }) {
   const { reason } = await searchParams;
   return (
-    <section className="card" aria-labelledby="login-title">
-      <h1 id="login-title">Sign in</h1>
-      <p>Enter your email. We will send you a one-time code. No password needed.</p>
+    <AuthCard titleId="login-title" title="Sign in">
+      <p className="auth-lede">Enter your email. We will send you a one-time code. No password needed.</p>
       {reason === 'removed' ? (
-        <p className="notice" role="alert">Your access has ended. Contact a manager if this is a mistake.</p>
+        <p className="banner banner-danger" role="alert">
+          <CircleAlert />
+          <span>Your access has ended. Contact a manager if this is a mistake.</span>
+        </p>
       ) : null}
       <LoginForm />
-    </section>
+    </AuthCard>
   );
 }
 

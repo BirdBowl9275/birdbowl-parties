@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { CircleAlert } from '../components/icons';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { normalizePhone } from '@/lib/phone';
 
@@ -12,17 +13,39 @@ export function LoginForm() {
   const [step, setStep] = useState<Step>('contact');
   const [contact, setContact] = useState('');
   const [code, setCode] = useState('');
+  const [focusedTab, setFocusedTab] = useState<Channel>('email');
+  const codeRef = useRef<HTMLInputElement>(null);
+  const contactRef = useRef<HTMLInputElement>(null);
+  const tabRefs = useRef<Record<Channel, HTMLButtonElement | null>>({ email: null, phone: null });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The normalized address or number the code was sent to.
   const [target, setTarget] = useState<string>('');
 
+  // Move focus into the code field when the code step opens (the contact form unmounts).
+  useEffect(() => {
+    if (step === 'code') codeRef.current?.focus();
+  }, [step]);
+
   function switchChannel(next: Channel) {
     setChannel(next);
+    setFocusedTab(next);
     setStep('contact');
     setContact('');
     setCode('');
     setError(null);
+  }
+
+  // Manual activation (APG): arrows, Home and End move focus only. Enter or Space selects.
+  function onTabKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    let next: Channel | null = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') next = focusedTab === 'email' ? 'phone' : 'email';
+    else if (e.key === 'Home') next = 'email';
+    else if (e.key === 'End') next = 'phone';
+    if (!next) return;
+    e.preventDefault();
+    setFocusedTab(next);
+    tabRefs.current[next]?.focus();
   }
 
   async function sendCode(e: React.FormEvent<HTMLFormElement>) {
@@ -96,96 +119,125 @@ export function LoginForm() {
     }
   }
 
+  const errorNote = error ? (
+    <p id="auth-error" className="banner banner-danger" role="alert">
+      <CircleAlert />
+      <span>{error}</span>
+    </p>
+  ) : null;
+
   return (
     <>
-      <div role="tablist" aria-label="Sign in with" className="tabs">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={channel === 'email'}
-          className={channel === 'email' ? 'tab tab-active' : 'tab'}
-          onClick={() => switchChannel('email')}
-        >
-          Email
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={channel === 'phone'}
-          className={channel === 'phone' ? 'tab tab-active' : 'tab'}
-          onClick={() => switchChannel('phone')}
-        >
-          Phone
-        </button>
+      <div
+        role="tablist"
+        aria-label="Sign in with"
+        className="auth-seg"
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setFocusedTab(channel);
+        }}
+      >
+        {(['email', 'phone'] as const).map((c) => (
+          <button
+            key={c}
+            type="button"
+            role="tab"
+            id={`tab-${c}`}
+            ref={(el) => {
+              tabRefs.current[c] = el;
+            }}
+            aria-selected={channel === c}
+            aria-controls={channel === c ? 'auth-panel' : undefined}
+            tabIndex={focusedTab === c ? 0 : -1}
+            onClick={() => switchChannel(c)}
+            onKeyDown={onTabKeyDown}
+          >
+            {c === 'email' ? 'Email' : 'Phone'}
+          </button>
+        ))}
       </div>
 
-      {step === 'contact' ? (
-        <form onSubmit={sendCode} noValidate>
-          {channel === 'email' ? (
-            <>
-              <label htmlFor="contact">Work email</label>
+      <div role="tabpanel" id="auth-panel" aria-labelledby={`tab-${channel}`}>
+        {step === 'contact' ? (
+          <form onSubmit={sendCode} noValidate className="auth-form">
+            <div className="auth-field">
+              {channel === 'email' ? (
+                <>
+                  <label htmlFor="contact">Work email</label>
+                  <input
+                    id="contact"
+                    name="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    required
+                    ref={contactRef}
+                    aria-describedby={error ? 'auth-error' : undefined}
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <label htmlFor="contact">Mobile number</label>
+                  <input
+                    id="contact"
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    required
+                    ref={contactRef}
+                    aria-describedby={error ? 'auth-error' : undefined}
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                  />
+                </>
+              )}
+            </div>
+            {errorNote}
+            <button type="submit" disabled={busy || !contact.trim()} aria-busy={busy || undefined}>
+              {busy ? 'Sending...' : channel === 'email' ? 'Email me a code' : 'Text me a code'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={verifyCode} noValidate className="auth-form">
+            <p id="code-status" role="status" className="auth-status">
+              If that {channel === 'email' ? 'email' : 'number'} can sign in, a code is on its way.
+            </p>
+            <div className="auth-field">
+              <label htmlFor="code">One-time code</label>
               <input
-                id="contact"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
+                id="code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 required
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
+                ref={codeRef}
+                aria-describedby={error ? 'code-status auth-error' : 'code-status'}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
               />
-            </>
-          ) : (
-            <>
-              <label htmlFor="contact">Mobile number</label>
-              <input
-                id="contact"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                required
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-              />
-            </>
-          )}
-          {error ? <p className="notice" role="alert">{error}</p> : null}
-          <button type="submit" disabled={busy || !contact.trim()}>
-            {busy ? 'Sending...' : channel === 'email' ? 'Email me a code' : 'Text me a code'}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={verifyCode} noValidate>
-          <p role="status">If that {channel === 'email' ? 'email' : 'number'} can sign in, a code is on its way.</p>
-          <label htmlFor="code">One-time code</label>
-          <input
-            id="code"
-            name="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          {error ? <p className="notice" role="alert">{error}</p> : null}
-          <button type="submit" disabled={busy || !code.trim()}>
-            {busy ? 'Checking...' : 'Sign in'}
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              setStep('contact');
-              setCode('');
-              setError(null);
-            }}
-          >
-            Use a different {channel === 'email' ? 'email' : 'number'}
-          </button>
-        </form>
-      )}
+            </div>
+            {errorNote}
+            <button type="submit" disabled={busy || !code.trim()} aria-busy={busy || undefined}>
+              {busy ? 'Checking...' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setStep('contact');
+                setCode('');
+                setError(null);
+                requestAnimationFrame(() => contactRef.current?.focus());
+              }}
+            >
+              Use a different {channel === 'email' ? 'email' : 'number'}
+            </button>
+          </form>
+        )}
+      </div>
     </>
   );
 }

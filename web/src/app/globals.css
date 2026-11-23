@@ -459,51 +459,178 @@ button:disabled {
   background: var(--surface-selected);
 }
 
-.notice {
-  color: var(--danger-fg);
-  margin-bottom: var(--space-4);
-}
-
 /* ---------- Cards and legacy screens (login, pending, staff, sales) ---------- */
-
-.card {
-  width: 100%;
-  max-width: 400px;
-  background: var(--surface);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
-}
 
 .wide {
   max-width: 960px;
 }
 
-.tabs {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  border-bottom: var(--border-width) solid var(--border);
+/* ---------- Auth (login and pending) ---------- */
+
+.page:has(.auth-card) {
+  align-items: flex-start;
 }
 
-.tab {
-  width: auto;
+.auth-card {
+  --auth-display: 1.75rem;
+  --auth-code: 1.25rem;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+}
+
+/* Phone: edge-to-edge, no card chrome, 16px of page padding (spec 4.1). */
+@media (max-width: 639.98px) {
+  .auth-card {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    padding: var(--space-4) 0;
+  }
+}
+
+/* Laptop and up: centred horizontally, sitting about a third of the way down (spec 4.1). */
+@media (min-width: 640px) {
+  .auth-card {
+    padding: var(--space-8);
+    margin-top: 12vh;
+  }
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-title-3);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.auth-brand-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.auth-brand img {
+  display: block;
+  border-radius: var(--radius-full);
+}
+
+.auth-card h1 {
+  font-size: var(--auth-display);
+}
+
+.auth-lede {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-form .banner {
+  margin: 0;
+}
+
+.auth-field input {
+  margin-bottom: 0;
+}
+
+.auth-form #code {
+  font-size: var(--auth-code);
+  letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-signout {
+  margin-top: var(--space-3);
+}
+
+.auth-signout .btn-ghost {
+  width: 100%;
+}
+
+.auth-status {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* An empty live region stays in the DOM so its text is announced; cancel its flex gap. */
+.auth-status:empty {
+  margin-top: calc(-1 * var(--space-4));
+}
+
+.auth-status-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.auth-status-ok .ic {
+  flex: none;
+  margin-top: var(--space-0-5);
+  color: var(--success-fg);
+}
+
+/* Disabled must read as disabled yet stay legible: a clear grey fill with muted but
+   readable text. No opacity. Enabled primary stays brand red. */
+.auth-card button:disabled {
+  background: var(--surface-selected);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* Segmented Email / Phone tabs. */
+.auth-seg {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.auth-seg button {
   flex: 1;
+  width: auto;
   background: transparent;
   color: var(--text-muted);
-  border-radius: 0;
-  border-bottom: var(--border-width-strong) solid transparent;
-  margin-bottom: -1px;
+  border-color: transparent;
 }
 
-.tab:hover {
-  background: var(--surface-sunken);
+.auth-seg button:hover {
+  background: transparent;
   color: var(--text);
 }
 
-.tab-active {
+.auth-seg button:active {
+  background: transparent;
+}
+
+/* Selected: fill, shadow, a 3:1 outline and weight (1.4.11), same as the theme toggle. */
+.auth-seg button[aria-selected='true'] {
+  background: var(--surface);
   color: var(--text);
-  border-bottom-color: var(--brand-fg);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+@media (forced-colors: active) {
+  .auth-seg button[aria-selected='true'] {
+    border: var(--border-width-strong) solid Highlight;
+  }
 }
 
 .week-nav {
@@ -773,6 +900,27 @@ table.fairness td {
   .theme-opt {
     min-height: var(--control-sm);
     padding: 0 var(--space-3);
+  }
+}
+
+/* On the sign-in card the toggle is icon-only at every width, so "Bird Bowl Parties" keeps one
+   line in the 400px card. The labels stay available to assistive technology. */
+.auth-brand .theme-opt .vh-md {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 640px) {
+  .auth-brand .theme-opt {
+    min-width: var(--control-sm);
+    padding: 0 var(--space-2);
   }
 }
 
