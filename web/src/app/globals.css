@@ -674,7 +674,8 @@ table.fairness td {
   gap: var(--space-1) var(--space-4);
   max-width: var(--content-max-wide);
   margin: 0 auto;
-  padding: var(--space-2) var(--space-4);
+  /* No bottom padding: the active link's underline sits on the header's bottom border. */
+  padding: var(--space-2) var(--space-4) 0;
 }
 
 .brand-link {
@@ -710,6 +711,8 @@ table.fairness td {
   align-items: center;
   min-height: var(--control-lg);
   padding: 0 var(--space-3);
+  /* A label never breaks mid-word ("My / schedule"); whole links wrap to a new row instead. */
+  white-space: nowrap;
   color: var(--text-muted);
   text-decoration: none;
   border-bottom: var(--border-width-strong) solid transparent;
@@ -743,7 +746,16 @@ table.fairness td {
 
 @media (min-width: 640px) {
   .site-header-inner {
-    padding: 0 var(--space-6);
+    padding: var(--space-1) var(--space-6) 0;
+  }
+}
+
+/* The links share one row with the logo and tools only from 1024px, where the longest set
+   (admin, five links) fits with the theme and Sign out labels. Below that they keep their own
+   full-width row, so the header is two tidy rows instead of links squeezed and wrapping. */
+@media (min-width: 1024px) {
+  .site-header-inner {
+    padding: 0 var(--space-8);
     min-height: var(--header-height);
   }
 
@@ -756,12 +768,6 @@ table.fairness td {
   .site-nav a {
     min-height: var(--header-height);
     border-radius: 0;
-  }
-}
-
-@media (min-width: 1024px) {
-  .site-header-inner {
-    padding: 0 var(--space-8);
   }
 }
 
