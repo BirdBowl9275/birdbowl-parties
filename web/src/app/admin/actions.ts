@@ -51,7 +51,8 @@ export async function updateProfile(formData: FormData) {
       .is('approved_at', null);
   }
 
-  back(path, 'Saved.');
+  // Say which row was saved, and jump back to it, so the row itself can confirm the save.
+  redirect(`${path}?msg=${encodeURIComponent('Saved.')}&saved=${targetId}#user-${targetId}`);
 }
 
 export async function updateSetting(formData: FormData) {

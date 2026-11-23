@@ -25,7 +25,16 @@ export type UserRowData = {
 // server HTML (unless the user is already removed), so a first press of Save can never remove
 // anyone. Once the page is hydrated the option is enabled, and a Save that would set the status to
 // removed is intercepted: it opens the confirm instead, and only "Yes, remove" submits.
-export function UserRow({ action, row }: { action: (formData: FormData) => Promise<void>; row: UserRowData }) {
+export function UserRow({
+  action,
+  row,
+  justSaved = false,
+}: {
+  action: (formData: FormData) => Promise<void>;
+  row: UserRowData;
+  // True right after this row was saved: the Save button shows a green "Saved" until edited again.
+  justSaved?: boolean;
+}) {
   // Pending rows lead with the email: approve on the address, never on the typed name, which the
   // inviter chose and the person can change (security verifier on WEB-INV-01).
   const pending = row.status === 'pending';
@@ -35,6 +44,8 @@ export function UserRow({ action, row }: { action: (formData: FormData) => Promi
   const contact = pending ? row.full_name || '' : row.email ?? row.phone ?? '';
   const [hydrated, setHydrated] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const showSaved = justSaved && !dirty;
   const statusRef = useRef<HTMLSelectElement>(null);
   const yesRef = useRef<HTMLButtonElement>(null);
   const keepRef = useRef<HTMLButtonElement>(null);
@@ -91,6 +102,8 @@ export function UserRow({ action, row }: { action: (formData: FormData) => Promi
       className={row.status === 'removed' ? 'urow removed' : 'urow'}
       aria-label={`Edit ${label}`}
       onSubmit={onSubmit}
+      onChange={() => setDirty(true)}
+      id={`user-${row.id}`}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && confirming) keep();
       }}
@@ -148,8 +161,20 @@ export function UserRow({ action, row }: { action: (formData: FormData) => Promi
         </select>
       </div>
       <div className="ucell-save">
-        <button type="submit" className={row.status === 'pending' ? undefined : 'btn-secondary'}>
-          Save<span className="vh"> {label}</span>
+        <button
+          type="submit"
+          className={showSaved ? 'btn-secondary btn-saved' : row.status === 'pending' ? undefined : 'btn-secondary'}
+        >
+          {showSaved ? (
+            <>
+              <Check />
+              Saved<span className="vh"> {label}. Save again</span>
+            </>
+          ) : (
+            <>
+              Save<span className="vh"> {label}</span>
+            </>
+          )}
         </button>
       </div>
       {confirming ? (

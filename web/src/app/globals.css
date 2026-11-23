@@ -2632,3 +2632,11 @@ table.data .r {
 .invite-panel .party-form {
   margin-top: var(--space-4);
 }
+
+/* Admin, Users: a row's Save button confirms the save until the row is edited again. */
+.urow button.btn-saved {
+  color: var(--success-fg);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  gap: var(--space-1-5);
+}

@@ -25,9 +25,9 @@ function UsersHead() {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ msg?: string }>;
+  searchParams: Promise<{ msg?: string; saved?: string }>;
 }) {
-  const { msg } = await searchParams;
+  const { msg, saved } = await searchParams;
   const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
@@ -76,7 +76,7 @@ export default async function AdminUsersPage({
             <ul className="ulist" aria-labelledby="pending-title">
               {pending.map((r) => (
                 <li key={r.id}>
-                  <UserRow action={updateProfile} row={r} />
+                  <UserRow action={updateProfile} row={r} justSaved={r.id === saved} />
                 </li>
               ))}
             </ul>
@@ -92,7 +92,7 @@ export default async function AdminUsersPage({
             <ul className="ulist" aria-labelledby="others-title">
               {others.map((r) => (
                 <li key={r.id}>
-                  <UserRow action={updateProfile} row={r} />
+                  <UserRow action={updateProfile} row={r} justSaved={r.id === saved} />
                 </li>
               ))}
             </ul>
