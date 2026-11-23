@@ -331,7 +331,7 @@ Inside content: `title-1` page title, optional one-line description in `--text-m
 
 ### 3.3 Week switcher (parity item 11)
 
-Anatomy: `[<] Week of Mon, Nov 23 – Sun, Nov 29 [>]`. Prev/next are icon buttons rendered as the existing `<Link>`s with `?week=YYYY-MM-DD` (URL contract unchanged), `aria-label="Previous week"` / `"Next week"`, plus visible text "Previous" / "Next" at laptop and up. The label is `title-3`, `numeric`.
+Anatomy: `[<] Week of Nov 23 – 29, 2026 [>]`. Prev/next are icon buttons rendered as the existing `<Link>`s with `?week=YYYY-MM-DD` (URL contract unchanged), visible text "Previous week" / "Next week" at laptop and up (icon-only below, with the same accessible names). The label is `title-3`, `numeric`.
 States: hover `--surface-sunken`; focus ring; active `--surface-selected`. While a server navigation is pending, the label shows a 14px spinner (no layout shift).
 Phone: full-width bar, 44px buttons at each end, label centred, shortened to "Nov 23 – 29".
 

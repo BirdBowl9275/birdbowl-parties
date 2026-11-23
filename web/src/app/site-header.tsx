@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { homePathForRole } from '@/lib/access';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import logo from './brand-logo-128.png';
 import { HeaderNav, type NavLink } from './components/header-nav';
 import { LogOut } from './components/icons';
 import { ThemeToggle } from './components/theme-toggle';
@@ -57,7 +58,7 @@ export async function SiteHeader() {
       </a>
       <div className="site-header-inner">
         <Link href={homePathForRole(role)} className="brand-link">
-          <img src="/brand/bird-bowl-logo.png" width={32} height={32} alt="Bird Bowl" />
+          <img src={logo.src} width={32} height={32} alt="Bird Bowl" />
           <span>Parties</span>
         </Link>
         <HeaderNav links={linksForRole(role)} />

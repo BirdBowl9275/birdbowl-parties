@@ -18,3 +18,7 @@ Jeff approved the visual direction in design/preview/index.html and design/desig
 - Pilot first: design tokens, shared header, and the manager schedule. Jeff approves the pilot before other screens.
 - Backup: .backups/2026-11-23-pre-redesign (web/src, configs, design docs).
 - Models: builder on Sonnet 5.5, critic on Opus 5.5.
+
+## Pilot approval (2026-11-23)
+
+Jeff approved the pilot's visual direction (manager schedule, header, tokens, light/dark) for rollout. Order: sales parties, then staff, then admin (users and settings), then login and pending. One screen per phase, with tests, build and before/after screenshots each time.

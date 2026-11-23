@@ -32,6 +32,17 @@ function dayHeading(day: string): string {
   });
 }
 
+// "Nov 23 – 29, 2026" (or "Nov 28 – Dec 4, 2026") from the Monday and Sunday keys. Display only.
+function weekLabel(first: string, last: string): string {
+  const fmt = (d: string, o: Intl.DateTimeFormatOptions) =>
+    new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { ...o, timeZone: 'UTC' });
+  const sameMonth = first.slice(0, 7) === last.slice(0, 7);
+  const start = fmt(first, { month: 'short', day: 'numeric' });
+  const end = sameMonth ? fmt(last, { day: 'numeric' }) : fmt(last, { month: 'short', day: 'numeric' });
+  const year = fmt(last, { year: 'numeric' });
+  return `${start} \u2013 ${end}, ${year}`;
+}
+
 type HostRow = { id: string; full_name: string; tier: number; daily_cap: number };
 
 export default async function ManagerSchedulePage({
@@ -109,6 +120,8 @@ export default async function ManagerSchedulePage({
           const host = a ? previewInput!.hosts.find((h) => h.id === a.hostId) : undefined;
           return { p, host };
         })
+        // Display order only: by date, then start time. The engine data is untouched.
+        .sort((a, b) => a.p.date.localeCompare(b.p.date) || a.p.start.localeCompare(b.p.start))
       : [];
 
   const hostPill = (host: { fullName: string } | undefined, fixed: boolean) => (
@@ -143,7 +156,7 @@ export default async function ManagerSchedulePage({
               <ChevronLeft />
               <span className="vh-md">Previous week</span>
             </Link>
-            <span className="week-label">Week of {monday}</span>
+            <span className="week-label">Week of {weekLabel(monday, days[6])}</span>
             <Link href={`/manager/schedule?week=${addDays(monday, 7)}`}>
               <span className="vh-md">Next week</span>
               <ChevronRight />
@@ -191,8 +204,8 @@ export default async function ManagerSchedulePage({
               <tbody>
                 {previewRows.map(({ p, host }) => (
                   <tr key={p.id}>
-                    <td>{p.date}</td>
-                    <td>{formatClock(p.start)} to {formatClock(p.end)}</td>
+                    <td>{dayHeading(p.date)}</td>
+                    <td>{formatClock(p.start)}–{formatClock(p.end)}</td>
                     <td className="r">{p.kids}</td>
                     <td>{p.type}</td>
                     <td>{hostPill(host, Boolean(p.fixed))}</td>
@@ -204,7 +217,7 @@ export default async function ManagerSchedulePage({
           <ul className="cards only-cards" aria-label="Assignment preview">
             {previewRows.map(({ p, host }) => (
               <li key={p.id}>
-                <p className="card-title">{p.date}, {formatClock(p.start)} to {formatClock(p.end)}</p>
+                <p className="card-title">{dayHeading(p.date)}, {formatClock(p.start)}–{formatClock(p.end)}</p>
                 <p className="muted num">{p.kids} kids · {p.type}</p>
                 <p>
                   <span className="muted">Proposed host: </span>
@@ -239,21 +252,28 @@ export default async function ManagerSchedulePage({
             const dayParties = parties.filter((p) => p.party_date === day);
             return (
               <div key={day} className="day-group">
-                <h2>
+                <h2 id={`day-${day}`}>
                   {dayHeading(day)}
-                  {dayParties.length > 0 ? <span className="day-count">{dayParties.length} {dayParties.length === 1 ? 'party' : 'parties'}</span> : null}
+                  {dayParties.length > 0 ? <span className="day-count"><span className="vh">, </span>{dayParties.length} {dayParties.length === 1 ? 'party' : 'parties'}</span> : null}
                 </h2>
                 {dayParties.length === 0 ? <p className="empty">No parties.</p> : null}
+                {dayParties.length > 0 ? (
+                <div role="table" aria-labelledby={`day-${day}`} className="day-rows">
+                <div role="row" className="vh">
+                  {['Time', 'Customer', 'Kids', 'Type', 'Host', 'Lock', 'Save'].map((c) => (
+                    <span key={c} role="columnheader">{c}</span>
+                  ))}
+                </div>
                 {dayParties.map((p) => (
-                  <form key={p.id} action={reassignParty} className="prow" aria-label={`Assign ${p.customer_name}`}>
+                  <form key={p.id} action={reassignParty} role="row" className="prow" aria-label={`Assign ${p.customer_name}`}>
                     <input type="hidden" name="party_id" value={p.id} />
                     <input type="hidden" name="week" value={monday} />
-                    <div className="pcell pcell-time">
-                      <span className="plabel">Time</span>
+                    <div role="cell" className="pcell pcell-time">
+                      <span className="plabel" aria-hidden="true">Time</span>
                       {formatClock(p.start_time)}–{formatClock(p.end_time)}
                     </div>
-                    <div className="pcell pcell-customer">
-                      <span className="plabel">Customer</span>
+                    <div role="cell" className="pcell pcell-customer">
+                      <span className="plabel" aria-hidden="true">Customer</span>
                       <strong>{p.customer_name}</strong>
                       <span className="pills">
                         {p.assigned_host ? (
@@ -275,15 +295,15 @@ export default async function ManagerSchedulePage({
                         ) : null}
                       </span>
                     </div>
-                    <div className="pcell pcell-kids">
-                      <span className="plabel">Kids</span>
+                    <div role="cell" className="pcell pcell-kids">
+                      <span className="plabel" aria-hidden="true">Kids</span>
                       {p.kids_count}
                     </div>
-                    <div className="pcell pcell-type">
-                      <span className="plabel">Type</span>
+                    <div role="cell" className="pcell pcell-type">
+                      <span className="plabel" aria-hidden="true">Type</span>
                       {p.party_type}
                     </div>
-                    <label className="pcell pcell-host">
+                    <label role="cell" className="pcell pcell-host">
                       <span className="plabel">Host</span>
                       <select name="host_id" defaultValue={p.assigned_host ?? ''}>
                         <option value="">Not assigned</option>
@@ -294,21 +314,21 @@ export default async function ManagerSchedulePage({
                         ))}
                       </select>
                     </label>
-                    <div className="pcell pcell-lock">
+                    <div role="cell" className="pcell pcell-lock">
                       <label className="lockchip">
                         <input type="checkbox" name="locked" defaultChecked={p.assignment_locked} />
-                        <span className="vh">Lock by hand</span>
                         <span className="ic-off" aria-hidden="true"><LockOpen /></span>
                         <span className="ic-on" aria-hidden="true"><Lock /></span>
-                        <span className="txt-off" aria-hidden="true">Lock</span>
-                        <span className="txt-on" aria-hidden="true">Locked</span>
+                        <span className="txt">Lock<span className="hide-lg"> by hand</span></span>
                       </label>
                     </div>
-                    <div className="pcell pcell-save">
-                      <button type="submit" className="secondary btn-secondary">Save assignment</button>
+                    <div role="cell" className="pcell pcell-save">
+                      <button type="submit" className="secondary btn-secondary">Save<span className="vh"> assignment</span></button>
                     </div>
                   </form>
                 ))}
+                </div>
+                ) : null}
               </div>
             );
           })}
@@ -335,7 +355,7 @@ export default async function ManagerSchedulePage({
                         <th scope="row">{hostName.get(s.hostId)}</th>
                         <td className="r">{s.parties}</td>
                         <td className="r">{s.totalKids}</td>
-                        <td className="r">{s.averageKids === null ? '–' : s.averageKids.toFixed(1)}</td>
+                        <td className="r">{s.averageKids === null ? <><span aria-hidden="true">–</span><span className="vh">No parties</span></> : s.averageKids.toFixed(1)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -356,7 +376,7 @@ export default async function ManagerSchedulePage({
                       </div>
                       <div>
                         <dt>Average kids</dt>
-                        <dd>{s.averageKids === null ? '–' : s.averageKids.toFixed(1)}</dd>
+                        <dd>{s.averageKids === null ? <><span aria-hidden="true">–</span><span className="vh">No parties</span></> : s.averageKids.toFixed(1)}</dd>
                       </div>
                     </dl>
                   </li>

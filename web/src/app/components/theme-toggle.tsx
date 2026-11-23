@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Monitor, Moon, Sun } from './icons';
 
 type Choice = 'light' | 'dark' | 'system';
@@ -16,7 +16,7 @@ const OPTIONS: { value: Choice; label: string; icon: React.ReactNode }[] = [
 export function ThemeToggle() {
   const [choice, setChoice] = useState<Choice>('system');
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     try {
       const stored = window.localStorage.getItem('theme');
       if (stored === 'light' || stored === 'dark') setChoice(stored);

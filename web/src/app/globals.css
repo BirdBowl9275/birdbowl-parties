@@ -70,6 +70,7 @@
   --space-1-5: 6px;
   --space-2: 8px;
   --space-3: 12px;
+  --space-3-5: 14px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
@@ -97,6 +98,9 @@
   --control-lg: 44px;
 
   --header-height: 56px;
+  --content-max-wide: 2000px;
+  --content-max-ultra: 2400px;
+  --rail-width: 400px;
   --z-header: 20;
 
   --dur-fast: 120ms;
@@ -194,7 +198,15 @@
 }
 
 html {
-  scroll-padding-top: 72px;
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
+}
+
+/* The header is sticky only from 1024px, where it fits on one row (57px). Below that it scrolls away,
+   so focused controls can never sit under it (WCAG 2.4.11). */
+@media (max-width: 1023.98px) {
+  html {
+    scroll-padding-top: var(--space-4);
+  }
 }
 
 body {
@@ -224,7 +236,7 @@ body {
   justify-content: center;
   padding: var(--space-4);
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Wide, data-heavy screens start at the top instead of floating in the middle. */
@@ -254,6 +266,12 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (min-width: 1024px) {
+  .hide-lg {
+    display: none;
+  }
 }
 
 @media (max-width: 639.98px) {
@@ -629,6 +647,12 @@ table.fairness td {
   border-bottom: var(--border-width) solid var(--border);
 }
 
+@media (max-width: 1023.98px) {
+  .site-header {
+    position: static;
+  }
+}
+
 .skip-link {
   position: absolute;
   left: var(--space-2);
@@ -650,7 +674,7 @@ table.fairness td {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-4);
-  max-width: 2000px;
+  max-width: var(--content-max-wide);
   margin: 0 auto;
   padding: var(--space-2) var(--space-4);
 }
@@ -732,8 +756,8 @@ table.fairness td {
   }
 
   .site-nav a {
-    min-height: var(--control-md);
-    align-self: center;
+    min-height: var(--header-height);
+    border-radius: 0;
   }
 }
 
@@ -761,8 +785,8 @@ table.fairness td {
   align-items: center;
   justify-content: center;
   gap: var(--space-1-5);
-  min-width: 40px;
-  min-height: 40px;
+  min-width: var(--control-lg);
+  min-height: var(--control-lg);
   margin: 0;
   padding: 0 var(--space-2);
   border-radius: var(--radius-xs);
@@ -791,7 +815,8 @@ table.fairness td {
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-sm);
-  outline: var(--border-width) solid var(--border);
+  outline: var(--border-width) solid var(--border-input);
+  font-weight: 600;
 }
 
 .theme-opt:has(input:focus-visible) {
@@ -863,14 +888,14 @@ table.fairness td {
   align-items: flex-start;
   gap: var(--space-2);
   margin: 0 0 var(--space-4);
-  padding: var(--space-3) 14px;
+  padding: var(--space-3) var(--space-3-5);
   border: var(--border-width) solid;
   border-radius: var(--radius-md);
 }
 
 .banner .ic {
   flex: none;
-  margin-top: 3px;
+  margin-top: var(--space-0-5);
 }
 
 .banner-info {
@@ -905,10 +930,11 @@ table.fairness td {
   align-items: flex-start;
   font-weight: 400;
   margin-bottom: var(--space-3);
+  padding-block: var(--space-3);
 }
 
 .panel .check input {
-  margin-top: 12px;
+  margin-top: var(--space-0-5);
 }
 
 .panel form button {
@@ -919,7 +945,7 @@ table.fairness td {
 
 .sched {
   width: 100%;
-  max-width: 2000px;
+  max-width: var(--content-max-wide);
   margin: 0 auto;
 }
 
@@ -1021,13 +1047,19 @@ table.fairness td {
 }
 
 .sched-rail {
-  order: -1;
+  order: 0;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) and (max-width: 1439.98px) {
+  .sched-rail {
+    order: -1;
+  }
+}
+
+@media (min-width: 1440px) {
   .sched-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) var(--rail-width);
     align-items: start;
     gap: var(--space-6);
   }
@@ -1047,6 +1079,15 @@ table.fairness td {
   font-size: var(--text-title-3);
 }
 
+/* Compact, quiet empty day inside the schedule. */
+.day-group .empty {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-subtle);
+}
+
 .empty {
   margin: 0;
   padding: var(--space-6);
@@ -1059,11 +1100,22 @@ table.fairness td {
 
 /* Read-only tables (fairness, preview) */
 
+.sched-rail table.data th,
+.sched-rail table.data td {
+  padding-inline: var(--space-2);
+}
+
+@media (min-width: 1024px) and (max-width: 1439.98px) {
+  .sched-rail .data-table-wrap {
+    max-width: 640px;
+  }
+}
+
 .data-table-wrap {
   background: var(--surface);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
   margin-bottom: var(--space-4);
 }
 
@@ -1083,6 +1135,7 @@ table.data td {
 }
 
 table.data thead th {
+  white-space: nowrap;
   background: var(--surface-sunken);
   color: var(--text-muted);
   font-weight: 500;
@@ -1246,6 +1299,28 @@ table.data .r {
   margin: 0;
 }
 
+/* Explicit so Save always reads as an enabled secondary action, in both themes. */
+.prow .pcell-save .btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-sm);
+}
+
+.prow .pcell-save .btn-secondary:hover {
+  background: var(--surface-sunken);
+}
+
+.prow .pcell-save .btn-secondary:active {
+  background: var(--surface-selected);
+}
+
+@media (max-width: 1023.98px) {
+  .prow .pcell-save button {
+    padding-block: 0;
+  }
+}
+
 .lockchip {
   position: relative;
   display: inline-flex;
@@ -1278,24 +1353,44 @@ table.data .r {
   cursor: pointer;
 }
 
-.lockchip .ic-on,
-.lockchip .txt-on {
+.lockchip .ic-on {
   display: none;
 }
 
 .lockchip:has(input:checked) {
   color: var(--info-fg);
   background: var(--info-bg);
-  border-color: var(--info-border);
+  border-color: var(--info-fg);
+  box-shadow: inset 0 0 0 var(--border-width) var(--info-fg);
+  font-weight: 600;
 }
 
-.lockchip:has(input:checked) .ic-on,
-.lockchip:has(input:checked) .txt-on {
+/* A check glyph so the state is not carried by colour alone. Empty alt text keeps it out of the name. */
+.lockchip:has(input:checked)::after {
+  content: '\2713' / '';
+  font-weight: 700;
+  line-height: 1;
+}
+
+@media (forced-colors: active) {
+  .lockchip:has(input:checked) {
+    border: 2px solid Highlight;
+    box-shadow: none;
+    color: HighlightText;
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .lockchip:has(input:focus-visible) {
+    outline: 2px solid CanvasText;
+  }
+}
+
+.lockchip:has(input:checked) .ic-on {
   display: inline-flex;
 }
 
-.lockchip:has(input:checked) .ic-off,
-.lockchip:has(input:checked) .txt-off {
+.lockchip:has(input:checked) .ic-off {
   display: none;
 }
 
@@ -1308,7 +1403,7 @@ table.data .r {
   .phead,
   .prow {
     display: grid;
-    grid-template-columns: 132px minmax(0, 1fr) 48px 76px 190px 92px 76px;
+    grid-template-columns: 140px minmax(0, 1fr) 48px 76px 190px 92px 64px;
     gap: var(--space-3);
     align-items: center;
   }
@@ -1378,6 +1473,10 @@ table.data .r {
   }
 
   .prow .pcell-save button {
+    white-space: nowrap;
+  }
+
+  .prow .pcell-save button {
     min-height: var(--control-sm);
     padding: 0 var(--space-3);
     font-size: var(--text-small);
@@ -1385,6 +1484,86 @@ table.data .r {
 
   .day-group .prow:last-child {
     margin-bottom: 0;
+  }
+}
+
+/* Ultrawide (1920px and up): the week becomes a grid of day columns, each a stack of compact
+   party cards. The fairness rail stays on the right. Data gets more columns, never wider text. */
+@media (min-width: 1920px) {
+  .sched-main {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-3);
+    align-items: start;
+  }
+
+  .phead {
+    display: none;
+  }
+
+  .day-group {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .prow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3);
+    margin-bottom: var(--space-2);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+  }
+
+  .prow:hover {
+    background: var(--surface);
+  }
+
+  .prow .plabel {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .pcell-time {
+    white-space: normal;
+  }
+
+  .prow .pcell-kids {
+    text-align: left;
+  }
+
+  .pcell-customer {
+    order: -1;
+    flex: 1 0 100%;
+    font-size: var(--text-body);
+  }
+
+  .pcell-host {
+    flex: 1 0 100%;
+  }
+
+  .pcell-host select {
+    margin-top: var(--space-1);
+  }
+
+  .pcell-save {
+    flex: 1 0 auto;
+  }
+}
+
+@media (min-width: 2200px) {
+  .sched,
+  .site-header-inner {
+    max-width: var(--content-max-ultra);
   }
 }
 
