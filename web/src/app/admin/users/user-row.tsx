@@ -59,6 +59,14 @@ export function UserRow({
     if (confirming) keepRef.current?.focus();
   }, [confirming]);
 
+  // After a save the page reloads at the top; bring the saved row back into view.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (!justSaved) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    formRef.current?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+  }, [justSaved]);
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     const submitter = (e.nativeEvent as SubmitEvent).submitter;
     if (submitter && submitter === yesRef.current) {
@@ -98,6 +106,7 @@ export function UserRow({
 
   return (
     <form
+      ref={formRef}
       action={action}
       className={row.status === 'removed' ? 'urow removed' : 'urow'}
       aria-label={`Edit ${label}`}
