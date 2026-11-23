@@ -331,4 +331,9 @@ select tests.fails($$update public.profiles set invited_by = null where id = aut
                    '0007: a user cannot change their own invited_by');
 reset role;
 
+-- 0008: the server role may read only the invite-count columns of profiles.
+select tests.ok(has_column_privilege('service_role', 'public.profiles', 'invited_by', 'select'), '0008: service_role can read invited_by');
+select tests.ok(not has_column_privilege('service_role', 'public.profiles', 'email', 'select'), '0008: service_role cannot read email');
+select tests.ok(not has_table_privilege('service_role', 'public.profiles', 'update'), '0008: service_role cannot update profiles');
+
 select format('ALL %s ASSERTIONS PASSED', n) as result from tests.counter;
