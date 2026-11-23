@@ -337,6 +337,8 @@ select tests.ok(not has_column_privilege('service_role', 'public.profiles', 'ema
 select tests.ok(not has_table_privilege('service_role', 'public.profiles', 'update'), '0008: service_role cannot update profiles');
 
 -- 0009: Supabase sets app_metadata after creating the user; the update trigger records the inviter.
+-- Supabase Auth writes app_metadata with no signed-in user, so clear the claim left by the 0007 test.
+select set_config('request.jwt.claim.sub', '', false);
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000013', 'late@example.com', '{"full_name":"Late Tag"}');
 select tests.ok((select invited_by is null from public.profiles where id = '00000000-0000-0000-0000-000000000013'),
