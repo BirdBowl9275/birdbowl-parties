@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bird Bowl Parties: design preview</title>
+<style>
+/* ---------- Tokens: light (default) ---------- */
+:root, .t-light {
+  color-scheme: light;
+  --bg:#F7F7F8; --surface:#FFFFFF; --surface-sunken:#F4F4F5; --surface-selected:#EDEDEF; --surface-overlay:#FFFFFF;
+  --border-subtle:#E7E7EA; --border:#DCDCE0; --border-input:#8A8A93;
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#63636C; --text-disabled:#A1A1AA;
+  --brand:#D7002A; --brand-hover:#BB0025; --brand-active:#9E001F; --on-brand:#FFFFFF; --brand-fg:#D7002A;
+  --brand-subtle-bg:#FDECEF; --brand-subtle-border:#F7B9C4; --brand-subtle-fg:#B00023;
+  --focus:#2563EB;
+  --success-fg:#137538; --success-bg:#EDF7F0; --success-border:#A7D7B5;
+  --warning-fg:#A14E00; --warning-bg:#FFF6E5; --warning-border:#EBC77A;
+  --info-fg:#1D4ED8; --info-bg:#EEF3FE; --info-border:#B3C8F5;
+  --danger-fg:#B42318; --danger-bg:#FEF1F0; --danger-border:#F4B8B2; --danger:#B42318; --danger-hover:#9A1C13; --on-danger:#FFFFFF;
+  --neutral-fg:#52525B; --neutral-bg:#F4F4F5; --neutral-border:#DCDCE0;
+  --shadow-sm:0 1px 2px rgb(16 17 20 / .06);
+  --shadow-md:0 4px 12px rgb(16 17 20 / .08), 0 1px 2px rgb(16 17 20 / .06);
+}
+/* ---------- Tokens: dark ---------- */
+.t-dark, html:has(#th-dark:checked) {
+  color-scheme: dark;
+  --bg:#0E0F11; --surface:#16171A; --surface-sunken:#1D1E22; --surface-selected:#2A2C31; --surface-overlay:#24262B;
+  --border-subtle:#26282D; --border:#2F3137; --border-input:#6B6E76;
+  --text:#EDEDEF; --text-muted:#A1A1AA; --text-subtle:#8E8E97; --text-disabled:#5A5C63;
+  --brand:#D7002A; --brand-hover:#E4143C; --brand-active:#BB0025; --on-brand:#FFFFFF; --brand-fg:#FF4D64;
+  --brand-subtle-bg:#3A0F17; --brand-subtle-border:#6E1A2A; --brand-subtle-fg:#FF7A8B;
+  --focus:#60A5FA;
+  --success-fg:#4ADE80; --success-bg:#0F2A1A; --success-border:#1F5133;
+  --warning-fg:#FBBF24; --warning-bg:#2E2208; --warning-border:#5C4512;
+  --info-fg:#7AA7FF; --info-bg:#101E3A; --info-border:#24417A;
+  --danger-fg:#FF8A80; --danger-bg:#351513; --danger-border:#6B2621; --danger:#B42318; --danger-hover:#C62D20; --on-danger:#FFFFFF;
+  --neutral-fg:#A1A1AA; --neutral-bg:#1D1E22; --neutral-border:#2F3137;
+  --shadow-sm:none; --shadow-md:none;
+}
+@media (prefers-color-scheme: dark) {
+  html:not(:has(#th-light:checked)) {
+    color-scheme: dark;
+    --bg:#0E0F11; --surface:#16171A; --surface-sunken:#1D1E22; --surface-selected:#2A2C31; --surface-overlay:#24262B;
+    --border-subtle:#26282D; --border:#2F3137; --border-input:#6B6E76;
+    --text:#EDEDEF; --text-muted:#A1A1AA; --text-subtle:#8E8E97; --text-disabled:#5A5C63;
+    --brand:#D7002A; --brand-hover:#E4143C; --brand-active:#BB0025; --on-brand:#FFFFFF; --brand-fg:#FF4D64;
+    --brand-subtle-bg:#3A0F17; --brand-subtle-border:#6E1A2A; --brand-subtle-fg:#FF7A8B;
+    --focus:#60A5FA;
+    --success-fg:#4ADE80; --success-bg:#0F2A1A; --success-border:#1F5133;
+    --warning-fg:#FBBF24; --warning-bg:#2E2208; --warning-border:#5C4512;
+    --info-fg:#7AA7FF; --info-bg:#101E3A; --info-border:#24417A;
+    --danger-fg:#FF8A80; --danger-bg:#351513; --danger-border:#6B2621; --danger:#B42318; --danger-hover:#C62D20; --on-danger:#FFFFFF;
+    --neutral-fg:#A1A1AA; --neutral-bg:#1D1E22; --neutral-border:#2F3137;
+    --shadow-sm:none; --shadow-md:none;
+  }
+}
+/* ---------- Shared scale ---------- */
+:root {
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-xs:4px; --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-full:999px;
+  --dur-fast:120ms; --ease-out:cubic-bezier(.2,0,0,1);
+}
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { transition-duration:1ms !important; animation-duration:1ms !important; } }
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: 72px; }
+body { margin:0; font-family:var(--font-sans); font-size:15px; line-height:22px; background:var(--bg); color:var(--text); -webkit-text-size-adjust:100%; }
+.t-light, .t-dark { background:var(--bg); color:var(--text); }
+h1,h2,h3,h4 { margin:0; }
+p { margin:0; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color:var(--text-muted); }
+.subtle { color:var(--text-subtle); }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.ic { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
+:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* ---------- Page chrome ---------- */
+.top { position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--border); }
+.top-in { max-width:1440px; margin:0 auto; padding:0 24px; height:56px; display:flex; align-items:center; gap:12px; }
+.logo { width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; display:grid; place-items:center; font-size:11px; font-weight:800; letter-spacing:.02em; flex:none; }
+.brandname { font-weight:600; font-size:15px; }
+.spacer { flex:1; }
+.wrap { max-width:1440px; margin:0 auto; padding:32px 24px 64px; }
+.sec { margin-top:48px; }
+.sec > h2 { font-size:22px; line-height:28px; font-weight:600; letter-spacing:-.015em; }
+.sec > p.lead { color:var(--text-muted); margin-top:4px; max-width:68ch; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+.panel { border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; }
+.panel-h { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:16px; }
+.hero h1 { font-size:28px; line-height:36px; font-weight:650; letter-spacing:-.02em; }
+.hero p { color:var(--text-muted); margin-top:8px; max-width:68ch; }
+.note { font-size:13px; line-height:18px; color:var(--text-subtle); margin-top:8px; }
+
+/* ---------- Segmented (theme toggle, tabs) ---------- */
+.seg { display:inline-flex; padding:2px; gap:2px; background:var(--surface-sunken); border:1px solid var(--border); border-radius:8px; }
+.seg label, .seg .s { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:6px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; }
+.seg input { position:absolute; opacity:0; width:1px; height:1px; }
+.seg label:has(input:checked), .seg .s.on { background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm); outline:1px solid var(--border); }
+.seg label:has(input:focus-visible) { outline:2px solid var(--focus); outline-offset:1px; }
+
+/* ---------- Swatches ---------- */
+.swg { margin-top:14px; }
+.swg h4 { font-size:12px; font-weight:500; color:var(--text-subtle); margin-bottom:6px; }
+.sws { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+.sw { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--surface); }
+.sw .chip { height:40px; display:flex; align-items:center; padding:0 10px; font-weight:600; font-size:14px; border-bottom:1px solid var(--border-subtle); }
+.sw .meta { padding:6px 10px; font-size:12px; line-height:16px; }
+.sw .meta b { display:block; font-weight:500; color:var(--text); }
+.sw .meta span { color:var(--text-subtle); font-family:var(--font-mono); font-size:11.5px; }
+
+/* ---------- Type scale ---------- */
+.ts { display:grid; grid-template-columns:140px 1fr; gap:6px 20px; align-items:baseline; margin-top:16px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface); padding:20px; }
+.ts dt { font-size:12px; line-height:16px; color:var(--text-subtle); font-family:var(--font-mono); }
+.ts dd { margin:0 0 10px; overflow-wrap:anywhere; }
+.r-display { font-size:28px; line-height:36px; font-weight:650; letter-spacing:-.02em; }
+.r-t1 { font-size:22px; line-height:28px; font-weight:600; letter-spacing:-.015em; }
+.r-t2 { font-size:17px; line-height:24px; font-weight:600; letter-spacing:-.01em; }
+.r-t3 { font-size:15px; line-height:22px; font-weight:600; letter-spacing:-.005em; }
+.r-body { font-size:15px; line-height:22px; }
+.r-strong { font-size:15px; line-height:22px; font-weight:550; }
+.r-small { font-size:13px; line-height:18px; }
+.r-label { font-size:13px; line-height:16px; font-weight:500; letter-spacing:.005em; }
+.r-caption { font-size:12px; line-height:16px; font-weight:500; letter-spacing:.01em; }
+.r-mono { font-family:var(--font-mono); font-size:13px; line-height:18px; font-weight:500; }
+
+/* ---------- Buttons ---------- */
+.btn { --h:36px; display:inline-flex; align-items:center; justify-content:center; gap:6px; height:var(--h); padding:0 14px; border-radius:var(--radius-sm); border:1px solid transparent; font:inherit; font-size:14px; font-weight:550; line-height:1; cursor:pointer; white-space:nowrap; transition:background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); text-decoration:none; }
+.btn.sm { --h:32px; padding:0 10px; font-size:13px; }
+.btn.lg { --h:44px; padding:0 16px; font-size:15px; }
+.btn-primary { background:var(--brand); color:var(--on-brand); }
+.btn-primary:hover, .btn-primary.is-hover { background:var(--brand-hover); }
+.btn-primary:active, .btn-primary.is-active { background:var(--brand-active); }
+.btn-secondary { background:var(--surface); color:var(--text); border-color:var(--border-input); }
+.btn-secondary:hover, .btn-secondary.is-hover { background:var(--surface-sunken); }
+.btn-secondary:active, .btn-secondary.is-active { background:var(--surface-selected); }
+.btn-ghost { background:transparent; color:var(--text-muted); }
+.btn-ghost:hover, .btn-ghost.is-hover { background:var(--surface-sunken); color:var(--text); }
+.btn-ghost:active, .btn-ghost.is-active { background:var(--surface-selected); color:var(--text); }
+.btn-danger-o { background:var(--surface); color:var(--danger-fg); border-color:var(--danger-border); }
+.btn-danger-o:hover, .btn-danger-o.is-hover { background:var(--danger-bg); }
+.btn-danger { background:var(--danger); color:var(--on-danger); }
+.btn-danger:hover, .btn-danger.is-hover { background:var(--danger-hover); }
+.btn.is-focus { outline:2px solid var(--focus); outline-offset:2px; }
+.btn:disabled, .btn.is-disabled { background:var(--surface-sunken); color:var(--text-disabled); border-color:var(--border-subtle); cursor:not-allowed; }
+.btn-icon { width:var(--h); padding:0; }
+.spin { animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.states { display:grid; grid-template-columns:auto repeat(6, auto); gap:10px 10px; align-items:center; justify-content:start; overflow-x:auto; padding-bottom:4px; }
+.states .rh { font-size:12px; color:var(--text-subtle); white-space:nowrap; }
+.states .ch { font-size:12px; color:var(--text-subtle); }
+
+/* ---------- Forms ---------- */
+.fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-top:20px; }
+.field label, .field .lbl { display:block; font-size:13px; line-height:16px; font-weight:500; color:var(--text-muted); margin-bottom:6px; }
+.input, .select { width:100%; height:36px; padding:0 10px; font:inherit; font-size:15px; color:var(--text); background:var(--surface); border:1px solid var(--border-input); border-radius:var(--radius-sm); }
+.select { appearance:none; -webkit-appearance:none; padding-right:30px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A8A93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; }
+.input::placeholder { color:var(--text-subtle); }
+.input:hover, .select:hover, .input.is-hover { border-color:var(--text-subtle); }
+.input:focus-visible, .select:focus-visible, .input.is-focus { border-color:var(--focus); outline:2px solid var(--focus); outline-offset:0; }
+.input:disabled, .select:disabled { background:var(--surface-sunken); color:var(--text-muted); border-color:var(--border); cursor:not-allowed; }
+.input.is-error { border:2px solid var(--danger-fg); padding:0 9px; }
+.help { display:flex; gap:6px; align-items:flex-start; font-size:12px; line-height:16px; font-weight:500; margin-top:6px; color:var(--text-subtle); }
+.help.err { color:var(--danger-fg); }
+.help .ic { width:14px; height:14px; margin-top:1px; }
+.check { display:inline-flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; min-height:24px; }
+.check input { appearance:none; -webkit-appearance:none; margin:0; width:16px; height:16px; border:1px solid var(--border-input); border-radius:var(--radius-xs); background:var(--surface); display:grid; place-items:center; cursor:pointer; }
+.check input:checked { background:var(--text); border-color:var(--text); }
+.check input:checked::after { content:""; width:9px; height:5px; border:2px solid var(--surface); border-top:0; border-right:0; transform:translateY(-1px) rotate(-45deg); }
+.check input:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* Lock chip (real checkbox) */
+.lock { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 9px; border-radius:var(--radius-full); border:1px solid var(--border); color:var(--text-muted); font-size:12px; font-weight:500; cursor:pointer; background:var(--surface); white-space:nowrap; }
+.lock input { position:absolute; opacity:0; width:1px; height:1px; }
+.lock .on, .lock .i-on { display:none; }
+.lock:has(input:checked) { background:var(--info-bg); border-color:var(--info-border); color:var(--info-fg); }
+.lock:has(input:checked) .on, .lock:has(input:checked) .i-on { display:inline; }
+.lock:has(input:checked) .off, .lock:has(input:checked) .i-off { display:none; }
+.lock:has(input:focus-visible) { outline:2px solid var(--focus); outline-offset:2px; }
+.lock .ic { width:13px; height:13px; }
+
+/* ---------- Pills, banners, empty ---------- */
+.pill { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px; border-radius:var(--radius-full); border:1px solid; font-size:12px; line-height:16px; font-weight:500; white-space:nowrap; }
+.pill .ic { width:12px; height:12px; }
+.p-success { color:var(--success-fg); background:var(--success-bg); border-color:var(--success-border); }
+.p-warning { color:var(--warning-fg); background:var(--warning-bg); border-color:var(--warning-border); }
+.p-info { color:var(--info-fg); background:var(--info-bg); border-color:var(--info-border); }
+.p-danger { color:var(--danger-fg); background:var(--danger-bg); border-color:var(--danger-border); }
+.p-neutral { color:var(--neutral-fg); background:var(--neutral-bg); border-color:var(--neutral-border); }
+.p-brand { color:var(--brand-subtle-fg); background:var(--brand-subtle-bg); border-color:var(--brand-subtle-border); }
+.pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.banner { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border:1px solid; border-radius:var(--radius-md); font-size:14px; line-height:20px; margin-top:12px; }
+.banner .ic { margin-top:2px; }
+.b-info { background:var(--info-bg); border-color:var(--info-border); color:var(--text); } .b-info .ic { color:var(--info-fg); }
+.b-danger { background:var(--danger-bg); border-color:var(--danger-border); color:var(--text); } .b-danger .ic { color:var(--danger-fg); }
+.b-success { background:var(--success-bg); border-color:var(--success-border); color:var(--text); } .b-success .ic { color:var(--success-fg); }
+.empty { margin-top:12px; padding:24px; border:1px dashed var(--border); border-radius:var(--radius-md); text-align:center; color:var(--text-muted); font-size:14px; }
+.empty .ic { width:20px; height:20px; color:var(--text-subtle); display:block; margin:0 auto 8px; }
+
+/* ---------- Mock app (manager schedule, laptop) ---------- */
+.mock { container-type:inline-size; margin-top:16px; border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; background:var(--bg); max-width:1280px; }
+.m-head { height:56px; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); }
+.m-nav { display:flex; gap:4px; height:100%; }
+.m-nav a { display:flex; align-items:center; padding:0 10px; color:var(--text-muted); text-decoration:none; font-size:14px; font-weight:500; border-bottom:2px solid transparent; margin-bottom:-1px; }
+.m-nav a:hover { color:var(--text); }
+.m-nav a[aria-current="page"] { color:var(--text); border-bottom-color:var(--brand-fg); }
+.avatar { width:28px; height:28px; border-radius:50%; background:var(--surface-selected); color:var(--text-muted); display:grid; place-items:center; font-size:11px; font-weight:600; flex:none; }
+.m-body { padding:24px; }
+.m-title { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.m-title h3 { font-size:22px; line-height:28px; font-weight:600; letter-spacing:-.015em; }
+.week { display:inline-flex; align-items:center; gap:4px; }
+.week .lbl { font-weight:600; font-size:15px; padding:0 6px; }
+.week .short { display:none; }
+.m-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; margin-top:16px; align-items:start; }
+.tbl { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+.tr { display:grid; grid-template-columns:104px minmax(0,1fr) 48px 72px 190px 92px 64px; gap:12px; align-items:center; padding:6px 12px; min-height:48px; border-top:1px solid var(--border-subtle); font-size:13px; line-height:18px; }
+.tr:hover { background:var(--surface-sunken); }
+.th { min-height:36px; background:var(--surface-sunken); color:var(--text-muted); font-weight:500; border-top:0; }
+.th:hover { background:var(--surface-sunken); }
+.day { display:flex; align-items:baseline; gap:8px; padding:12px 12px 6px; border-top:1px solid var(--border); background:var(--bg); }
+.th + .day { border-top:0; }
+.day b { font-size:14px; font-weight:600; }
+.day span { font-size:12px; color:var(--text-subtle); }
+.day-empty { padding:4px 12px 12px; font-size:13px; color:var(--text-subtle); background:var(--bg); }
+.r { text-align:right; }
+.cust b { display:block; font-weight:550; font-size:14px; color:var(--text); }
+.cust .pill { margin-top:3px; height:20px; font-size:11.5px; padding:0 7px; }
+.tr .select { height:32px; font-size:13px; }
+.tr .lbl-m { display:none; }
+.rail { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; position:sticky; top:72px; }
+.rail h4 { font-size:14px; font-weight:600; padding:12px 14px; border-bottom:1px solid var(--border-subtle); }
+.rail table { width:100%; border-collapse:collapse; font-size:13px; }
+.rail th { text-align:right; font-weight:500; color:var(--text-muted); padding:8px 12px; background:var(--surface-sunken); }
+.rail th:first-child, .rail td:first-child { text-align:left; }
+.rail td { text-align:right; padding:8px 12px; border-top:1px solid var(--border-subtle); }
+.rail .foot { padding:10px 14px; font-size:12px; color:var(--text-subtle); border-top:1px solid var(--border-subtle); }
+.fcards { display:none; }
+
+/* Container query: the same mock collapses to the phone layout when narrow */
+@container (max-width: 760px) {
+  .m-head { padding:0 12px; gap:10px; height:52px; }
+  .m-nav, .m-head .seg { display:none; }
+  .m-body { padding:16px 12px; }
+  .m-title h3 { font-size:20px; }
+  .m-title .btn-primary { width:100%; height:44px; }
+  .week { width:100%; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:4px; }
+  .week .btn { width:44px; height:44px; }
+  .week .long, .week .txt { display:none; }
+  .week .short { display:inline; }
+  .m-grid { grid-template-columns:1fr; }
+  .rail { position:static; order:-1; }
+  .rail table { display:none; }
+  .fcards { display:grid; gap:0; }
+  .fc { padding:10px 14px; border-top:1px solid var(--border-subtle); }
+  .fc b { font-weight:550; font-size:14px; }
+  .fc dl { display:grid; grid-template-columns:repeat(3,1fr); margin:4px 0 0; }
+  .fc dt { font-size:12px; color:var(--text-subtle); }
+  .fc dd { margin:0; font-size:15px; font-weight:600; }
+  .tbl { background:transparent; border:0; overflow:visible; }
+  .th { display:none; }
+  .day { background:transparent; border:0; padding:16px 0 8px; }
+  .day-empty { background:transparent; padding:0 0 8px; }
+  .tr { grid-template-columns:1fr 1fr; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:10px; font-size:14px; }
+  .tr:hover { background:var(--surface); }
+  .tr .c-time { font-weight:600; font-size:15px; }
+  .tr .c-cust { grid-column:1 / -1; order:-1; }
+  .tr .c-kids, .tr .c-type { color:var(--text-muted); }
+  .tr .c-kids::after { content:" kids"; }
+  .tr .c-kids { text-align:left; }
+  .tr .c-host { grid-column:1 / -1; }
+  .tr .lbl-m { display:block; font-size:13px; font-weight:500; color:var(--text-muted); margin-bottom:6px; }
+  .tr .select { height:44px; font-size:16px; }
+  .tr .c-save .btn { width:100%; height:44px; }
+  .tr .lock { height:44px; padding:0 14px; }
+}
+
+/* ---------- Responsive page ---------- */
+@media (max-width: 900px) { .pair { grid-template-columns:1fr; } }
+@media (max-width: 639px) {
+  body { font-size:16px; line-height:24px; }
+  .top-in { padding:0 16px; height:52px; }
+  .top .seg .tx { display:none; }
+  .wrap { padding:24px 16px 48px; }
+  .hero h1 { font-size:24px; line-height:30px; }
+  .panel { padding:16px; }
+  .ts { grid-template-columns:1fr; padding:16px; }
+  .ts dd { margin-bottom:14px; }
+  .input, .select { height:44px; font-size:16px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cl" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-tri" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-mon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-load" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5Z"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  </defs>
+</svg>
+
+<a class="sr-only" href="#main">Skip to content</a>
+<header class="top">
+  <div class="top-in">
+    <span class="logo" aria-hidden="true">BB</span>
+    <span class="brandname">Parties <span class="subtle" style="font-weight:400">design preview</span></span>
+    <span class="spacer"></span>
+    <fieldset class="seg" style="border:1px solid var(--border);margin:0" aria-label="Theme">
+      <legend class="sr-only">Theme</legend>
+      <label title="Light"><input type="radio" name="theme" id="th-light"><svg class="ic"><use href="#i-sun"/></svg><span class="tx">Light</span></label>
+      <label title="Dark"><input type="radio" name="theme" id="th-dark"><svg class="ic"><use href="#i-moon"/></svg><span class="tx">Dark</span></label>
+      <label title="System"><input type="radio" name="theme" id="th-system" checked><svg class="ic"><use href="#i-mon"/></svg><span class="tx">System</span></label>
+    </fieldset>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <div class="hero">
+    <h1>Bird Bowl Parties: design direction</h1>
+    <p>Calm neutrals, one brand red for the logo and primary actions, a separate brick red for errors, a blue focus ring. Light and dark are equal; the page follows your system until you pick a theme above. All names are placeholders.</p>
+    <p class="note">The red circle marked "BB" is a stand-in for the real Bird Bowl logo asset. Full spec: design/design-system.md.</p>
+  </div>
+
+  <!-- ===================== PALETTE ===================== -->
+  <section class="sec" aria-labelledby="s-pal">
+    <h2 id="s-pal">Palette</h2>
+    <p class="lead">Ratios are text on the token's usual surface (<code>--surface</code>), computed with the WCAG 2.x formula. UI boundaries need 3:1, text 4.5:1.</p>
+    <div class="pair">
+      <div class="panel t-light" aria-label="Light palette">
+        <div class="panel-h"><svg class="ic"><use href="#i-sun"/></svg>Light</div>
+        <div class="swg"><h4>Surfaces</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#F7F7F8">Aa</div><div class="meta"><b>--bg</b><span>#F7F7F8 · text 16.55</span></div></div>
+          <div class="sw"><div class="chip" style="background:#FFFFFF">Aa</div><div class="meta"><b>--surface</b><span>#FFFFFF · text 17.72</span></div></div>
+          <div class="sw"><div class="chip" style="background:#F4F4F5">Aa</div><div class="meta"><b>--surface-sunken</b><span>#F4F4F5 · text 16.12</span></div></div>
+          <div class="sw"><div class="chip" style="background:#EDEDEF">Aa</div><div class="meta"><b>--surface-selected</b><span>#EDEDEF · muted 6.61</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Text and borders</h4><div class="sws">
+          <div class="sw"><div class="chip" style="color:#18181B">Text</div><div class="meta"><b>--text</b><span>#18181B · 17.72</span></div></div>
+          <div class="sw"><div class="chip" style="color:#52525B">Muted</div><div class="meta"><b>--text-muted</b><span>#52525B · 7.73</span></div></div>
+          <div class="sw"><div class="chip" style="color:#63636C">Subtle</div><div class="meta"><b>--text-subtle</b><span>#63636C · 5.95</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 1px #8A8A93">Input edge</div><div class="meta"><b>--border-input</b><span>#8A8A93 · 3.42</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 1px #DCDCE0">Card edge</div><div class="meta"><b>--border</b><span>#DCDCE0 · decorative</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Brand</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#D7002A;color:#fff">White on brand</div><div class="meta"><b>--brand</b><span>#D7002A · 5.35</span></div></div>
+          <div class="sw"><div class="chip" style="background:#BB0025;color:#fff">Hover</div><div class="meta"><b>--brand-hover</b><span>#BB0025 · 6.69</span></div></div>
+          <div class="sw"><div class="chip" style="background:#9E001F;color:#fff">Pressed</div><div class="meta"><b>--brand-active</b><span>#9E001F · 8.49</span></div></div>
+          <div class="sw"><div class="chip" style="color:#D7002A">Brand text</div><div class="meta"><b>--brand-fg</b><span>#D7002A · 5.35</span></div></div>
+          <div class="sw"><div class="chip" style="background:#FDECEF;color:#B00023">Brand tint</div><div class="meta"><b>--brand-subtle-*</b><span>#B00023/#FDECEF · 6.42</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Semantic and focus</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#EDF7F0;color:#137538">Success</div><div class="meta"><b>--success</b><span>#137538 · 5.28 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#FFF6E5;color:#A14E00">Warning</div><div class="meta"><b>--warning</b><span>#A14E00 · 5.43 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#EEF3FE;color:#1D4ED8">Info</div><div class="meta"><b>--info</b><span>#1D4ED8 · 6.03 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#FEF1F0;color:#B42318">Error</div><div class="meta"><b>--danger</b><span>#B42318 · 5.97 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#B42318;color:#fff">White on error</div><div class="meta"><b>--danger (fill)</b><span>#B42318 · 6.57</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 2px #2563EB">Focus ring</div><div class="meta"><b>--focus</b><span>#2563EB · 5.17</span></div></div>
+        </div></div>
+      </div>
+
+      <div class="panel t-dark" aria-label="Dark palette">
+        <div class="panel-h"><svg class="ic"><use href="#i-moon"/></svg>Dark</div>
+        <div class="swg"><h4>Surfaces (elevation = lighter surface)</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#0E0F11">Aa</div><div class="meta"><b>--bg</b><span>#0E0F11 · text 16.40</span></div></div>
+          <div class="sw"><div class="chip" style="background:#16171A">Aa</div><div class="meta"><b>--surface</b><span>#16171A · text 15.33</span></div></div>
+          <div class="sw"><div class="chip" style="background:#1D1E22">Aa</div><div class="meta"><b>--surface-sunken</b><span>#1D1E22 · text 14.24</span></div></div>
+          <div class="sw"><div class="chip" style="background:#24262B">Aa</div><div class="meta"><b>--surface-overlay</b><span>#24262B · text 12.95</span></div></div>
+          <div class="sw"><div class="chip" style="background:#2A2C31">Aa</div><div class="meta"><b>--surface-selected</b><span>#2A2C31 · text 11.95</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Text and borders</h4><div class="sws">
+          <div class="sw"><div class="chip" style="color:#EDEDEF">Text</div><div class="meta"><b>--text</b><span>#EDEDEF · 15.33</span></div></div>
+          <div class="sw"><div class="chip" style="color:#A1A1AA">Muted</div><div class="meta"><b>--text-muted</b><span>#A1A1AA · 6.99</span></div></div>
+          <div class="sw"><div class="chip" style="color:#8E8E97">Subtle</div><div class="meta"><b>--text-subtle</b><span>#8E8E97 · 5.52</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 1px #6B6E76">Input edge</div><div class="meta"><b>--border-input</b><span>#6B6E76 · 3.51</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 1px #2F3137">Card edge</div><div class="meta"><b>--border</b><span>#2F3137 · decorative</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Brand (lighter tone on dark)</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#D7002A;color:#fff">White on brand</div><div class="meta"><b>--brand</b><span>#D7002A · 5.35</span></div></div>
+          <div class="sw"><div class="chip" style="background:#E4143C;color:#fff">Hover</div><div class="meta"><b>--brand-hover</b><span>#E4143C · 4.70</span></div></div>
+          <div class="sw"><div class="chip" style="background:#BB0025;color:#fff">Pressed</div><div class="meta"><b>--brand-active</b><span>#BB0025 · 6.69</span></div></div>
+          <div class="sw"><div class="chip" style="color:#FF4D64">Brand text</div><div class="meta"><b>--brand-fg</b><span>#FF4D64 · 5.55</span></div></div>
+          <div class="sw"><div class="chip" style="color:#D7002A">Not for text</div><div class="meta"><b>#D7002A as text</b><span>3.35 · fails, use --brand-fg</span></div></div>
+          <div class="sw"><div class="chip" style="background:#3A0F17;color:#FF7A8B">Brand tint</div><div class="meta"><b>--brand-subtle-*</b><span>#FF7A8B/#3A0F17 · 6.67</span></div></div>
+        </div></div>
+        <div class="swg"><h4>Semantic and focus</h4><div class="sws">
+          <div class="sw"><div class="chip" style="background:#0F2A1A;color:#4ADE80">Success</div><div class="meta"><b>--success</b><span>#4ADE80 · 8.82 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#2E2208;color:#FBBF24">Warning</div><div class="meta"><b>--warning</b><span>#FBBF24 · 9.33 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#101E3A;color:#7AA7FF">Info</div><div class="meta"><b>--info</b><span>#7AA7FF · 6.93 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#351513;color:#FF8A80">Error</div><div class="meta"><b>--danger</b><span>#FF8A80 · 7.25 on tint</span></div></div>
+          <div class="sw"><div class="chip" style="background:#B42318;color:#fff">White on error</div><div class="meta"><b>--danger (fill)</b><span>#B42318 · 6.57</span></div></div>
+          <div class="sw"><div class="chip" style="box-shadow:inset 0 0 0 2px #60A5FA">Focus ring</div><div class="meta"><b>--focus</b><span>#60A5FA · 7.05</span></div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TYPE ===================== -->
+  <section class="sec" aria-labelledby="s-type">
+    <h2 id="s-type">Type scale</h2>
+    <p class="lead">System UI stack, no web fonts. Tabular numerals on every time and count. Inputs are 16px on phones to stop iOS zoom.</p>
+    <dl class="ts">
+      <dt>display 28/36 650</dt><dd class="r-display">Your schedule</dd>
+      <dt>title-1 22/28 600</dt><dd class="r-t1">Schedule</dd>
+      <dt>title-2 17/24 600</dt><dd class="r-t2">Fairness, last 30 days</dd>
+      <dt>title-3 15/22 600</dt><dd class="r-t3">Saturday, Nov 28</dd>
+      <dt>body 15/22 400</dt><dd class="r-body">Party time slots for the next two weeks. Details appear on the morning of each party.</dd>
+      <dt>body-strong 15/22 550</dt><dd class="r-strong">Customer C</dd>
+      <dt>small 13/18 400</dt><dd class="r-small muted num">2:00–4:00 PM · 22 kids · bowling</dd>
+      <dt>label 13/16 500</dt><dd class="r-label muted">Host tier</dd>
+      <dt>caption 12/16 500</dt><dd class="r-caption subtle">Preview only. Nothing is saved.</dd>
+      <dt>numeric (tabular)</dt><dd class="r-body num">11:00–1:00 · 18 kids · avg 15.3 · 14.0 · 11.1</dd>
+      <dt>mono 13/18 500</dt><dd class="r-mono subtle">?week=2026-11-23</dd>
+    </dl>
+  </section>
+
+  <!-- ===================== COMPONENTS ===================== -->
+  <section class="sec" aria-labelledby="s-comp">
+    <h2 id="s-comp">Buttons and form states</h2>
+    <p class="lead">Hover, focus and pressed are forced with classes here so every state is visible at once. Real controls on this page respond normally.</p>
+    <div class="pair">
+      <div class="panel t-light"><div class="panel-h"><svg class="ic"><use href="#i-sun"/></svg>Light</div>
+        <div class="states" role="presentation">
+          <span></span><span class="ch">Default</span><span class="ch">Hover</span><span class="ch">Focus</span><span class="ch">Pressed</span><span class="ch">Disabled</span><span class="ch">Loading</span>
+          <span class="rh">Primary</span><button class="btn btn-primary">Add party</button><button class="btn btn-primary is-hover">Add party</button><button class="btn btn-primary is-focus">Add party</button><button class="btn btn-primary is-active">Add party</button><button class="btn btn-primary" disabled>Add party</button><button class="btn btn-primary" disabled aria-busy="true"><svg class="ic spin"><use href="#i-load"/></svg>Saving...</button>
+          <span class="rh">Secondary</span><button class="btn btn-secondary">Save</button><button class="btn btn-secondary is-hover">Save</button><button class="btn btn-secondary is-focus">Save</button><button class="btn btn-secondary is-active">Save</button><button class="btn btn-secondary" disabled>Save</button><button class="btn btn-secondary" disabled aria-busy="true"><svg class="ic spin"><use href="#i-load"/></svg>Saving...</button>
+          <span class="rh">Ghost</span><button class="btn btn-ghost"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-hover"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-focus"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-active"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost" disabled><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><span></span>
+          <span class="rh">Danger</span><button class="btn btn-danger-o">Cancel party</button><button class="btn btn-danger-o is-hover">Cancel party</button><button class="btn btn-danger-o is-focus">Cancel party</button><button class="btn btn-danger">Confirm*</button><button class="btn btn-danger-o" disabled>Cancel party</button><span></span>
+        </div>
+        <p class="note">*Solid danger appears only inside a confirm dialog, which is a proposal pending approval.</p>
+        <div class="fgrid">
+          <div class="field"><label for="l-a">Customer</label><input id="l-a" class="input" value="Customer A"></div>
+          <div class="field"><label for="l-b">Customer (hover)</label><input id="l-b" class="input is-hover" value="Customer A"></div>
+          <div class="field"><label for="l-c">Customer (focus)</label><input id="l-c" class="input is-focus" value="Customer A"></div>
+          <div class="field"><label for="l-d">Kids (disabled)</label><input id="l-d" class="input num" value="12" disabled></div>
+          <div class="field"><label for="l-e">One-time code</label><input id="l-e" class="input is-error num" value="12345" aria-invalid="true" aria-describedby="l-e-h"><p id="l-e-h" class="help err"><svg class="ic"><use href="#i-alert"/></svg>That code is not right or has expired. Check it or request a new one.</p></div>
+          <div class="field"><label for="l-f">Host</label><select id="l-f" class="select"><option>Host A (tier 1)</option><option>Not assigned</option></select></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:20px">
+          <label class="check"><input type="checkbox" checked> I reviewed this preview</label>
+          <label class="check"><input type="checkbox"> Unchecked</label>
+          <label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand</span></label>
+          <label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand</span></label>
+          <div class="seg" role="tablist" aria-label="Sign in with"><span class="s on" role="tab" aria-selected="true">Email</span><span class="s" role="tab" aria-selected="false">Phone</span></div>
+        </div>
+        <div class="pills">
+          <span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span>
+          <span class="pill p-warning"><svg class="ic"><use href="#i-alert"/></svg>Not assigned</span>
+          <span class="pill p-info"><svg class="ic"><use href="#i-lock"/></svg>Locked</span>
+          <span class="pill p-neutral"><svg class="ic"><use href="#i-ban"/></svg>Cancelled</span>
+          <span class="pill p-warning"><svg class="ic"><use href="#i-clock"/></svg>Pending</span>
+          <span class="pill p-danger"><svg class="ic"><use href="#i-ban"/></svg>Removed</span>
+          <span class="pill p-neutral"><svg class="ic"><use href="#i-clock"/></svg>Details on the morning</span>
+          <span class="pill p-info"><svg class="ic"><use href="#i-eye"/></svg>Revealed</span>
+        </div>
+        <div class="banner b-danger" role="alert"><svg class="ic"><use href="#i-alert"/></svg><span>Could not load parties.</span></div>
+        <div class="banner b-info" role="status"><svg class="ic"><use href="#i-info"/></svg><span>Preview only. Nothing is saved. Locked and revealed parties keep their host.</span></div>
+        <div class="empty"><svg class="ic"><use href="#i-cal"/></svg>No upcoming parties.<br><span class="subtle">When you're assigned a party it shows here.</span></div>
+      </div>
+
+      <div class="panel t-dark"><div class="panel-h"><svg class="ic"><use href="#i-moon"/></svg>Dark</div>
+        <div class="states" role="presentation">
+          <span></span><span class="ch">Default</span><span class="ch">Hover</span><span class="ch">Focus</span><span class="ch">Pressed</span><span class="ch">Disabled</span><span class="ch">Loading</span>
+          <span class="rh">Primary</span><button class="btn btn-primary">Add party</button><button class="btn btn-primary is-hover">Add party</button><button class="btn btn-primary is-focus">Add party</button><button class="btn btn-primary is-active">Add party</button><button class="btn btn-primary" disabled>Add party</button><button class="btn btn-primary" disabled aria-busy="true"><svg class="ic spin"><use href="#i-load"/></svg>Saving...</button>
+          <span class="rh">Secondary</span><button class="btn btn-secondary">Save</button><button class="btn btn-secondary is-hover">Save</button><button class="btn btn-secondary is-focus">Save</button><button class="btn btn-secondary is-active">Save</button><button class="btn btn-secondary" disabled>Save</button><button class="btn btn-secondary" disabled aria-busy="true"><svg class="ic spin"><use href="#i-load"/></svg>Saving...</button>
+          <span class="rh">Ghost</span><button class="btn btn-ghost"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-hover"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-focus"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost is-active"><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><button class="btn btn-ghost" disabled><svg class="ic"><use href="#i-pencil"/></svg>Edit</button><span></span>
+          <span class="rh">Danger</span><button class="btn btn-danger-o">Cancel party</button><button class="btn btn-danger-o is-hover">Cancel party</button><button class="btn btn-danger-o is-focus">Cancel party</button><button class="btn btn-danger">Confirm*</button><button class="btn btn-danger-o" disabled>Cancel party</button><span></span>
+        </div>
+        <p class="note">*Solid danger appears only inside a confirm dialog, which is a proposal pending approval.</p>
+        <div class="fgrid">
+          <div class="field"><label for="d-a">Customer</label><input id="d-a" class="input" value="Customer A"></div>
+          <div class="field"><label for="d-b">Customer (hover)</label><input id="d-b" class="input is-hover" value="Customer A"></div>
+          <div class="field"><label for="d-c">Customer (focus)</label><input id="d-c" class="input is-focus" value="Customer A"></div>
+          <div class="field"><label for="d-d">Kids (disabled)</label><input id="d-d" class="input num" value="12" disabled></div>
+          <div class="field"><label for="d-e">One-time code</label><input id="d-e" class="input is-error num" value="12345" aria-invalid="true" aria-describedby="d-e-h"><p id="d-e-h" class="help err"><svg class="ic"><use href="#i-alert"/></svg>That code is not right or has expired. Check it or request a new one.</p></div>
+          <div class="field"><label for="d-f">Host</label><select id="d-f" class="select"><option>Host A (tier 1)</option><option>Not assigned</option></select></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:20px">
+          <label class="check"><input type="checkbox" checked> I reviewed this preview</label>
+          <label class="check"><input type="checkbox"> Unchecked</label>
+          <label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand</span></label>
+          <label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand</span></label>
+          <div class="seg" role="tablist" aria-label="Sign in with"><span class="s on" role="tab" aria-selected="true">Email</span><span class="s" role="tab" aria-selected="false">Phone</span></div>
+        </div>
+        <div class="pills">
+          <span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span>
+          <span class="pill p-warning"><svg class="ic"><use href="#i-alert"/></svg>Not assigned</span>
+          <span class="pill p-info"><svg class="ic"><use href="#i-lock"/></svg>Locked</span>
+          <span class="pill p-neutral"><svg class="ic"><use href="#i-ban"/></svg>Cancelled</span>
+          <span class="pill p-warning"><svg class="ic"><use href="#i-clock"/></svg>Pending</span>
+          <span class="pill p-danger"><svg class="ic"><use href="#i-ban"/></svg>Removed</span>
+          <span class="pill p-neutral"><svg class="ic"><use href="#i-clock"/></svg>Details on the morning</span>
+          <span class="pill p-info"><svg class="ic"><use href="#i-eye"/></svg>Revealed</span>
+        </div>
+        <div class="banner b-danger" role="alert"><svg class="ic"><use href="#i-alert"/></svg><span>Could not load parties.</span></div>
+        <div class="banner b-info" role="status"><svg class="ic"><use href="#i-info"/></svg><span>Preview only. Nothing is saved. Locked and revealed parties keep their host.</span></div>
+        <div class="empty"><svg class="ic"><use href="#i-cal"/></svg>No upcoming parties.<br><span class="subtle">When you're assigned a party it shows here.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MOCK ===================== -->
+  <section class="sec" aria-labelledby="s-mock">
+    <h2 id="s-mock">Manager weekly schedule, laptop (1280px)</h2>
+    <p class="lead">One table for the week with inline host, lock and save per party; fairness in a sticky right rail. When the frame is narrower than 760px (for example on a phone) the same markup collapses to the phone layout: fairness as stacked cards, parties as cards.</p>
+
+    <h3 class="r-t3" style="margin-top:20px">Light</h3>
+<div class="mock t-light" role="region" aria-label="Schedule mock, light theme">
+<div class="m-head"><span class="logo" aria-hidden="true">BB</span><b style="font-size:15px;font-weight:600">Parties</b><nav class="m-nav" aria-label="Main"><a href="#" aria-current="page">Schedule</a><a href="#">Parties</a><a href="#">My schedule</a></nav><span class="spacer"></span><div class="seg" aria-label="Theme"><span class="s on"><svg class="ic"><use href="#i-sun"/></svg></span><span class="s"><svg class="ic"><use href="#i-moon"/></svg></span><span class="s"><svg class="ic"><use href="#i-mon"/></svg></span></div><span class="avatar" aria-hidden="true">SM</span></div>
+<div class="m-body">
+<div class="m-title"><h3>Schedule</h3><div class="week"><a class="btn btn-ghost sm" href="#" aria-label="Previous week"><svg class="ic"><use href="#i-cl"/></svg><span class="txt">Previous</span></a><span class="lbl num"><span class="long">Week of Mon, Nov 23 – Sun, Nov 29</span><span class="short">Nov 23 – 29</span></span><a class="btn btn-ghost sm" href="#" aria-label="Next week"><span class="txt">Next</span><svg class="ic"><use href="#i-cr"/></svg></a></div><span class="spacer"></span><a class="btn btn-primary" href="#"><svg class="ic"><use href="#i-eye"/></svg>Preview assignment</a></div>
+<div class="banner b-success" role="status"><svg class="ic"><use href="#i-check"/></svg><span>Assignment saved.</span></div>
+<div class="m-grid">
+<div class="tbl" role="table" aria-label="Parties this week">
+<div class="tr th" role="row"><span role="columnheader">Time</span><span role="columnheader">Customer</span><span role="columnheader" class="r">Kids</span><span role="columnheader">Type</span><span role="columnheader">Host</span><span role="columnheader">Lock</span><span role="columnheader"><span class="sr-only">Save</span></span></div>
+<div class="day" role="row"><b role="rowheader">Monday, Nov 23</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Tuesday, Nov 24</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer A"><span role="cell" class="c-time num">5:00–7:00 PM</span><span role="cell" class="c-cust cust"><b>Customer A</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">12</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="lh1">Host</label><select id="lh1" class="select" aria-label="Host for Customer A"><option value="">Not assigned</option><option selected>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer A</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Wednesday, Nov 25</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Thursday, Nov 26</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Friday, Nov 27</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer B"><span role="cell" class="c-time num">6:30–8:30 PM</span><span role="cell" class="c-cust cust"><b>Customer B</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">14</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="lh2">Host</label><select id="lh2" class="select" aria-label="Host for Customer B"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option selected>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer B</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Saturday, Nov 28</b><span class="num">4 parties</span></div>
+<div class="tr" role="row" aria-label="Assign Customer C"><span role="cell" class="c-time num">11:00–1:00 PM</span><span role="cell" class="c-cust cust"><b>Customer C</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">18</span><span role="cell" class="c-type">other</span><span role="cell" class="c-host"><label class="lbl-m" for="lh3">Host</label><select id="lh3" class="select" aria-label="Host for Customer C"><option value="">Not assigned</option><option selected>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer C</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer D"><span role="cell" class="c-time num">11:30–1:30 PM</span><span role="cell" class="c-cust cust"><b>Customer D</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">9</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="lh4">Host</label><select id="lh4" class="select" aria-label="Host for Customer D"><option value="">Not assigned</option><option>Host A (tier 1)</option><option selected>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer D</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer E"><span role="cell" class="c-time num">2:00–4:00 PM</span><span role="cell" class="c-cust cust"><b>Customer E</b><span class="pill p-warning"><svg class="ic"><use href="#i-alert"/></svg>Not assigned</span></span><span role="cell" class="c-kids r num">22</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="lh5">Host</label><select id="lh5" class="select" aria-label="Host for Customer E"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer E</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer F"><span role="cell" class="c-time num">4:30–6:30 PM</span><span role="cell" class="c-cust cust"><b>Customer F</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">15</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="lh6">Host</label><select id="lh6" class="select" aria-label="Host for Customer F"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option selected>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer F</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Sunday, Nov 29</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer G"><span role="cell" class="c-time num">12:00–2:00 PM</span><span role="cell" class="c-cust cust"><b>Customer G</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">10</span><span role="cell" class="c-type">other</span><span role="cell" class="c-host"><label class="lbl-m" for="lh7">Host</label><select id="lh7" class="select" aria-label="Host for Customer G"><option value="">Not assigned</option><option>Host A (tier 1)</option><option selected>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer G</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+</div>
+<aside class="rail" aria-label="Fairness summary"><h4>Fairness, last 30 days</h4>
+<table><thead><tr><th scope="col">Host</th><th scope="col">Parties</th><th scope="col">Kids</th><th scope="col">Avg</th></tr></thead><tbody>
+<tr><td>Host A</td><td class="num">6</td><td class="num">92</td><td class="num">15.3</td></tr>
+<tr><td>Host B</td><td class="num">5</td><td class="num">70</td><td class="num">14.0</td></tr>
+<tr><td>Host C</td><td class="num">3</td><td class="num">44</td><td class="num">14.7</td></tr>
+<tr><td>Host D</td><td class="num">2</td><td class="num">30</td><td class="num">15.0</td></tr>
+<tr><td>Host E</td><td class="num">0</td><td class="num">0</td><td class="num">–</td></tr>
+</tbody></table><div class="fcards">
+<div class="fc"><b>Host A</b><dl><div><dt>Parties</dt><dd class="num">6</dd></div><div><dt>Total kids</dt><dd class="num">92</dd></div><div><dt>Avg kids</dt><dd class="num">15.3</dd></div></dl></div>
+<div class="fc"><b>Host B</b><dl><div><dt>Parties</dt><dd class="num">5</dd></div><div><dt>Total kids</dt><dd class="num">70</dd></div><div><dt>Avg kids</dt><dd class="num">14.0</dd></div></dl></div>
+<div class="fc"><b>Host C</b><dl><div><dt>Parties</dt><dd class="num">3</dd></div><div><dt>Total kids</dt><dd class="num">44</dd></div><div><dt>Avg kids</dt><dd class="num">14.7</dd></div></dl></div>
+<div class="fc"><b>Host D</b><dl><div><dt>Parties</dt><dd class="num">2</dd></div><div><dt>Total kids</dt><dd class="num">30</dd></div><div><dt>Avg kids</dt><dd class="num">15.0</dd></div></dl></div>
+<div class="fc"><b>Host E</b><dl><div><dt>Parties</dt><dd class="num">0</dd></div><div><dt>Total kids</dt><dd class="num">0</dd></div><div><dt>Avg kids</dt><dd class="num">–</dd></div></dl></div>
+</div><p class="foot">Averages, not totals, are what the engine balances.</p></aside>
+</div></div></div>
+    <h3 class="r-t3" style="margin-top:28px">Dark</h3>
+<div class="mock t-dark" role="region" aria-label="Schedule mock, dark theme">
+<div class="m-head"><span class="logo" aria-hidden="true">BB</span><b style="font-size:15px;font-weight:600">Parties</b><nav class="m-nav" aria-label="Main"><a href="#" aria-current="page">Schedule</a><a href="#">Parties</a><a href="#">My schedule</a></nav><span class="spacer"></span><div class="seg" aria-label="Theme"><span class="s"><svg class="ic"><use href="#i-sun"/></svg></span><span class="s on"><svg class="ic"><use href="#i-moon"/></svg></span><span class="s"><svg class="ic"><use href="#i-mon"/></svg></span></div><span class="avatar" aria-hidden="true">SM</span></div>
+<div class="m-body">
+<div class="m-title"><h3>Schedule</h3><div class="week"><a class="btn btn-ghost sm" href="#" aria-label="Previous week"><svg class="ic"><use href="#i-cl"/></svg><span class="txt">Previous</span></a><span class="lbl num"><span class="long">Week of Mon, Nov 23 – Sun, Nov 29</span><span class="short">Nov 23 – 29</span></span><a class="btn btn-ghost sm" href="#" aria-label="Next week"><span class="txt">Next</span><svg class="ic"><use href="#i-cr"/></svg></a></div><span class="spacer"></span><a class="btn btn-primary" href="#"><svg class="ic"><use href="#i-eye"/></svg>Preview assignment</a></div>
+<div class="banner b-success" role="status"><svg class="ic"><use href="#i-check"/></svg><span>Assignment saved.</span></div>
+<div class="m-grid">
+<div class="tbl" role="table" aria-label="Parties this week">
+<div class="tr th" role="row"><span role="columnheader">Time</span><span role="columnheader">Customer</span><span role="columnheader" class="r">Kids</span><span role="columnheader">Type</span><span role="columnheader">Host</span><span role="columnheader">Lock</span><span role="columnheader"><span class="sr-only">Save</span></span></div>
+<div class="day" role="row"><b role="rowheader">Monday, Nov 23</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Tuesday, Nov 24</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer A"><span role="cell" class="c-time num">5:00–7:00 PM</span><span role="cell" class="c-cust cust"><b>Customer A</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">12</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="dh1">Host</label><select id="dh1" class="select" aria-label="Host for Customer A"><option value="">Not assigned</option><option selected>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer A</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Wednesday, Nov 25</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Thursday, Nov 26</b><span class="num">No parties</span></div>
+<div class="day-empty">No parties.</div>
+<div class="day" role="row"><b role="rowheader">Friday, Nov 27</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer B"><span role="cell" class="c-time num">6:30–8:30 PM</span><span role="cell" class="c-cust cust"><b>Customer B</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">14</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="dh2">Host</label><select id="dh2" class="select" aria-label="Host for Customer B"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option selected>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer B</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Saturday, Nov 28</b><span class="num">4 parties</span></div>
+<div class="tr" role="row" aria-label="Assign Customer C"><span role="cell" class="c-time num">11:00–1:00 PM</span><span role="cell" class="c-cust cust"><b>Customer C</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">18</span><span role="cell" class="c-type">other</span><span role="cell" class="c-host"><label class="lbl-m" for="dh3">Host</label><select id="dh3" class="select" aria-label="Host for Customer C"><option value="">Not assigned</option><option selected>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer C</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer D"><span role="cell" class="c-time num">11:30–1:30 PM</span><span role="cell" class="c-cust cust"><b>Customer D</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">9</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="dh4">Host</label><select id="dh4" class="select" aria-label="Host for Customer D"><option value="">Not assigned</option><option>Host A (tier 1)</option><option selected>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer D</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer E"><span role="cell" class="c-time num">2:00–4:00 PM</span><span role="cell" class="c-cust cust"><b>Customer E</b><span class="pill p-warning"><svg class="ic"><use href="#i-alert"/></svg>Not assigned</span></span><span role="cell" class="c-kids r num">22</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="dh5">Host</label><select id="dh5" class="select" aria-label="Host for Customer E"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer E</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="tr" role="row" aria-label="Assign Customer F"><span role="cell" class="c-time num">4:30–6:30 PM</span><span role="cell" class="c-cust cust"><b>Customer F</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">15</span><span role="cell" class="c-type">bowling</span><span role="cell" class="c-host"><label class="lbl-m" for="dh6">Host</label><select id="dh6" class="select" aria-label="Host for Customer F"><option value="">Not assigned</option><option>Host A (tier 1)</option><option>Host B (tier 1)</option><option selected>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox"><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer F</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+<div class="day" role="row"><b role="rowheader">Sunday, Nov 29</b><span class="num">1 party</span></div>
+<div class="tr" role="row" aria-label="Assign Customer G"><span role="cell" class="c-time num">12:00–2:00 PM</span><span role="cell" class="c-cust cust"><b>Customer G</b><span class="pill p-success"><svg class="ic"><use href="#i-check"/></svg>Host assigned</span></span><span role="cell" class="c-kids r num">10</span><span role="cell" class="c-type">other</span><span role="cell" class="c-host"><label class="lbl-m" for="dh7">Host</label><select id="dh7" class="select" aria-label="Host for Customer G"><option value="">Not assigned</option><option>Host A (tier 1)</option><option selected>Host B (tier 1)</option><option>Host C (tier 2)</option><option>Host D (tier 3)</option><option>Host E (tier 3)</option></select></span><span role="cell" class="c-lock"><label class="lock"><input type="checkbox" checked><svg class="ic i-off"><use href="#i-unlock"/></svg><svg class="ic i-on"><use href="#i-lock"/></svg><span class="off">Lock</span><span class="on">Locked</span><span class="sr-only">Lock by hand, Customer G</span></label></span><span role="cell" class="c-save"><button class="btn btn-secondary sm" type="button">Save</button></span></div>
+</div>
+<aside class="rail" aria-label="Fairness summary"><h4>Fairness, last 30 days</h4>
+<table><thead><tr><th scope="col">Host</th><th scope="col">Parties</th><th scope="col">Kids</th><th scope="col">Avg</th></tr></thead><tbody>
+<tr><td>Host A</td><td class="num">6</td><td class="num">92</td><td class="num">15.3</td></tr>
+<tr><td>Host B</td><td class="num">5</td><td class="num">70</td><td class="num">14.0</td></tr>
+<tr><td>Host C</td><td class="num">3</td><td class="num">44</td><td class="num">14.7</td></tr>
+<tr><td>Host D</td><td class="num">2</td><td class="num">30</td><td class="num">15.0</td></tr>
+<tr><td>Host E</td><td class="num">0</td><td class="num">0</td><td class="num">–</td></tr>
+</tbody></table><div class="fcards">
+<div class="fc"><b>Host A</b><dl><div><dt>Parties</dt><dd class="num">6</dd></div><div><dt>Total kids</dt><dd class="num">92</dd></div><div><dt>Avg kids</dt><dd class="num">15.3</dd></div></dl></div>
+<div class="fc"><b>Host B</b><dl><div><dt>Parties</dt><dd class="num">5</dd></div><div><dt>Total kids</dt><dd class="num">70</dd></div><div><dt>Avg kids</dt><dd class="num">14.0</dd></div></dl></div>
+<div class="fc"><b>Host C</b><dl><div><dt>Parties</dt><dd class="num">3</dd></div><div><dt>Total kids</dt><dd class="num">44</dd></div><div><dt>Avg kids</dt><dd class="num">14.7</dd></div></dl></div>
+<div class="fc"><b>Host D</b><dl><div><dt>Parties</dt><dd class="num">2</dd></div><div><dt>Total kids</dt><dd class="num">30</dd></div><div><dt>Avg kids</dt><dd class="num">15.0</dd></div></dl></div>
+<div class="fc"><b>Host E</b><dl><div><dt>Parties</dt><dd class="num">0</dd></div><div><dt>Total kids</dt><dd class="num">0</dd></div><div><dt>Avg kids</dt><dd class="num">–</dd></div></dl></div>
+</div><p class="foot">Averages, not totals, are what the engine balances.</p></aside>
+</div></div></div>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+
+# local secrets. Never commit real keys.
+.env
+.env.local
+.env*.local
+
+# test output
+coverage/
+.vercel
+.env*

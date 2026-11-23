@@ -1,0 +1,19 @@
+# Secrets and local config: never commit
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.env.local
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+coverage/
+
+# Vercel CLI link and local backups (dated copies kept outside git history)
+.vercel/
+.backups/
+
+# OS and editor noise
+.DS_Store
