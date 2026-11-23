@@ -15,5 +15,8 @@ coverage/
 .vercel/
 .backups/
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # OS and editor noise
 .DS_Store
