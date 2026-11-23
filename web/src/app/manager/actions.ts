@@ -5,12 +5,19 @@ import { requireManager } from '@/lib/manager-guard';
 import { validWeekStart, todayBusiness, nowClockBusiness } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
+import type { ScheduleCode } from '@/lib/page-messages';
 
 const PARTY_ID = /^\d+$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function back(week: string, message: string): never {
-  redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${encodeURIComponent(message)}`);
+// The banner text lives in lib/page-messages.ts; the address only carries its code (and a count).
+function back(week: string, code: ScheduleCode): never {
+  redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${code}`);
+}
+
+// Count messages always carry their number.
+function backCount(week: string, code: 'assignments_saved' | 'assignments_stopped', n: number): never {
+  redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${code}&n=${n}`);
 }
 
 function field(formData: FormData, name: string): string {
@@ -25,12 +32,12 @@ export async function reassignParty(formData: FormData) {
   const { supabase } = await requireManager();
 
   const partyId = field(formData, 'party_id');
-  if (!PARTY_ID.test(partyId)) back(week, 'Unknown party.');
+  if (!PARTY_ID.test(partyId)) back(week, 'unknown_party');
 
   const hostId = field(formData, 'host_id');
   const locked = field(formData, 'locked') === 'on';
-  if (hostId !== '' && !UUID.test(hostId)) back(week, 'Pick a valid host.');
-  if (locked && hostId === '') back(week, 'Pick a host before locking a party.');
+  if (hostId !== '' && !UUID.test(hostId)) back(week, 'bad_host');
+  if (locked && hostId === '') back(week, 'lock_needs_host');
 
   const { data, error } = await supabase
     .from('parties')
@@ -40,9 +47,9 @@ export async function reassignParty(formData: FormData) {
     })
     .eq('id', Number(partyId))
     .select('id');
-  if (error) back(week, 'Could not save that assignment.');
-  if (!data || data.length === 0) back(week, 'That party was not found.');
-  back(week, 'Assignment saved.');
+  if (error) back(week, 'assignment_failed');
+  if (!data || data.length === 0) back(week, 'party_not_found');
+  back(week, 'assignment_saved');
 }
 
 // Saves what the engine proposes for the week, after a manager has reviewed the preview.
@@ -51,7 +58,7 @@ export async function reassignParty(formData: FormData) {
 export async function saveProposedAssignments(formData: FormData) {
   const week = validWeekStart(field(formData, 'week'), todayBusiness());
   if (field(formData, 'confirm') !== 'on') {
-    back(week, 'Tick the box to confirm you reviewed the preview.');
+    back(week, 'confirm_preview');
   }
 
   const { supabase } = await requireManager();
@@ -70,8 +77,8 @@ export async function saveProposedAssignments(formData: FormData) {
       .update({ assigned_host: target })
       .eq('id', Number(p.id))
       .select('id');
-    if (error) back(week, `Stopped after saving ${saved} assignment(s). Check the preview and try again.`);
+    if (error) backCount(week, 'assignments_stopped', saved);
     saved += 1;
   }
-  back(week, `Saved ${saved} assignment(s).`);
+  backCount(week, 'assignments_saved', saved);
 }

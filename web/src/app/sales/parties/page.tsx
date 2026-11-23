@@ -4,9 +4,12 @@ import { requirePartiesView } from '@/lib/sales-guard';
 import { createParty, cancelParty, updateParty } from '../actions';
 import { addDays, PARTY_TYPES, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { formatClock } from '@/lib/fairness';
-import { Ban, Check, ChevronLeft, ChevronRight, CircleAlert, Info } from '../../components/icons';
+import { Ban, Check, ChevronLeft, ChevronRight, CircleAlert } from '../../components/icons';
 import { PartyType, PARTY_TYPE_LABEL } from '../../components/party-type';
 import { CancelParty } from './cancel-party';
+import { MessageBanner } from '../../components/message-banner';
+import { one } from '@/lib/admin-messages';
+import { salesBanner } from '@/lib/page-messages';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,9 +52,12 @@ type Row = {
 export default async function SalesPartiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; msg?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { week: weekParam, msg } = await searchParams;
+  const sp = await searchParams;
+  // Single values only: a repeated key arrives as a list (security review WEB-BULK-07).
+  const weekParam = one(sp.week);
+  const msg = one(sp.msg);
   // Viewers see the list without any controls. Every write action still calls
   // requireSalesAccess(), and RLS blocks viewer writes.
   const { supabase, readOnly } = await requirePartiesView();
@@ -100,12 +106,7 @@ export default async function SalesPartiesPage({
           )}
         </div>
       </div>
-      {msg ? (
-        <div className="banner banner-info" role="status">
-          <Info />
-          <span>{msg}</span>
-        </div>
-      ) : null}
+      <MessageBanner banner={salesBanner(msg)} />
       {error ? (
         <div className="banner banner-danger" role="alert">
           <CircleAlert />

@@ -4,13 +4,19 @@ import { notFound } from 'next/navigation';
 import { Info } from '../components/icons';
 import { INVITE_MESSAGES } from '@/lib/invite';
 import { inviteUser } from './actions';
+import { one } from '@/lib/admin-messages';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Invite someone' };
 
-export default async function InvitePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
-  const { msg } = await searchParams;
+export default async function InvitePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Single value only: a repeated key arrives as a list (security review WEB-BULK-07b).
+  const msg = one((await searchParams).msg);
   // Unknown codes show nothing, so a crafted link cannot put its own text in the banner.
   const message = msg && Object.hasOwn(INVITE_MESSAGES, msg) ? INVITE_MESSAGES[msg] : undefined;
   // Admins, managers and sales may invite. Viewers can open the guard but have no edit rights,

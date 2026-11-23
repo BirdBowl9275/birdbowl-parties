@@ -7,6 +7,8 @@
 
 # Dependencies and build output
 node_modules/
+# Also a symlinked node_modules (as in git worktrees), which the slash form does not match.
+node_modules
 .next/
 out/
 coverage/

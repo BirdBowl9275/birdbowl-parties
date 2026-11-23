@@ -7,6 +7,9 @@ import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } fr
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
 import { PartyType } from '../../components/party-type';
+import { MessageBanner } from '../../components/message-banner';
+import { one } from '@/lib/admin-messages';
+import { scheduleBanner } from '@/lib/page-messages';
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Info, Lock, LockOpen, TriangleAlert } from '../../components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -52,9 +55,11 @@ type HostRow = { id: string; full_name: string; tier: number; daily_cap: number 
 export default async function ManagerSchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; msg?: string; preview?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { week: weekParam, msg, preview: previewParam } = await searchParams;
+  const sp = await searchParams;
+  // Single values only: a repeated key arrives as a list (security review WEB-BULK-07).
+  const [weekParam, msg, previewParam, n] = [sp.week, sp.msg, sp.preview, sp.n].map(one);
   // Managers and admins can edit; viewers (read-only) see the same week without any controls.
   // Every write action still calls requireManager(), and RLS blocks viewer writes.
   const { supabase, readOnly } = await requireScheduleView();
@@ -227,12 +232,7 @@ export default async function ManagerSchedulePage({
           )}
         </div>
       </div>
-      {msg ? (
-        <div className="banner banner-info" role="status">
-          <Info />
-          <span>{msg}</span>
-        </div>
-      ) : null}
+      <MessageBanner banner={scheduleBanner(msg, n)} />
       {partiesRes.error ? (
         <div className="banner banner-danger" role="alert">
           <CircleAlert />
