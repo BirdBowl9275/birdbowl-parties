@@ -2,8 +2,32 @@ import Link from 'next/link';
 import { requireSalesAccess } from '@/lib/sales-guard';
 import { createParty, cancelParty, updateParty } from '../actions';
 import { addDays, PARTY_TYPES, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
+import { formatClock } from '@/lib/fairness';
+import { Ban, Check, ChevronLeft, ChevronRight, CircleAlert, Info } from '../../components/icons';
+import { CancelParty } from './cancel-party';
 
 export const dynamic = 'force-dynamic';
+
+// "Saturday, Nov 28" from a YYYY-MM-DD key. UTC so the day never shifts with the server's zone.
+function dayHeading(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+// "Nov 23 – 29, 2026" (or "Nov 28 – Dec 4, 2026") from the Monday and Sunday keys. Display only.
+function weekLabel(first: string, last: string): string {
+  const fmt = (d: string, o: Intl.DateTimeFormatOptions) =>
+    new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { ...o, timeZone: 'UTC' });
+  const sameMonth = first.slice(0, 7) === last.slice(0, 7);
+  const start = fmt(first, { month: 'short', day: 'numeric' });
+  const end = sameMonth ? fmt(last, { day: 'numeric' }) : fmt(last, { month: 'short', day: 'numeric' });
+  const year = fmt(last, { year: 'numeric' });
+  return `${start} – ${end}, ${year}`;
+}
 
 type Row = {
   id: number;
@@ -41,50 +65,121 @@ export default async function SalesPartiesPage({
   const rows = (data ?? []) as Row[];
 
   return (
-    <section className="card wide" aria-labelledby="parties-title">
-      <h1 id="parties-title">Parties</h1>
-      <nav className="week-nav" aria-label="Week">
-        <Link href={`/sales/parties?week=${addDays(monday, -7)}`}>Previous week</Link>
-        <span>Week of {monday}</span>
-        <Link href={`/sales/parties?week=${addDays(monday, 7)}`}>Next week</Link>
-      </nav>
-      {msg ? <p role="status">{msg}</p> : null}
-      {error ? <p className="notice" role="alert">Could not load parties.</p> : null}
+    <section className="sched sales" aria-labelledby="parties-title">
+      <div className="sched-head">
+        <h1 id="parties-title">Parties</h1>
+        <div className="sched-actions">
+          <nav className="weeknav" aria-label="Week">
+            <Link href={`/sales/parties?week=${addDays(monday, -7)}`}>
+              <ChevronLeft />
+              <span className="vh-md">Previous week</span>
+            </Link>
+            <span className="week-label">Week of {weekLabel(monday, sunday)}</span>
+            <Link href={`/sales/parties?week=${addDays(monday, 7)}`}>
+              <span className="vh-md">Next week</span>
+              <ChevronRight />
+            </Link>
+          </nav>
+          <a className="btn add-jump" href="#add-party">
+            Add a party
+          </a>
+        </div>
+      </div>
+      {msg ? (
+        <div className="banner banner-info" role="status">
+          <Info />
+          <span>{msg}</span>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="banner banner-danger" role="alert">
+          <CircleAlert />
+          <span>Could not load parties.</span>
+        </div>
+      ) : null}
 
-      <h2>Add a party</h2>
-      <PartyForm action={createParty} week={monday} />
-
-      {days.map((day) => {
-        const dayRows = rows.filter((r) => r.party_date === day);
-        return (
-          <div key={day} className="day">
-            <h2>{day}</h2>
-            {dayRows.length === 0 ? <p className="muted">No parties.</p> : null}
-            {dayRows.map((r) => (
-              <div key={r.id} className={r.status === 'cancelled' ? 'user-row cancelled' : 'user-row'}>
-                <p className="user-name">
-                  <strong>{r.customer_name}</strong>{' '}
-                  <span className="muted">
-                    {r.start_time.slice(0, 5)}–{r.end_time.slice(0, 5)} · {r.kids_count} kids · {r.party_type}
-                    {r.assigned_host ? ' · host assigned' : ' · not assigned'}
-                    {r.status === 'cancelled' ? ' · cancelled' : ''}
-                  </span>
-                </p>
-                {r.status === 'cancelled' ? null : (
-                  <>
-                    <PartyForm action={updateParty} week={monday} party={r} />
-                    <form action={cancelParty} className="inline">
-                      <input type="hidden" name="id" value={r.id} />
-                      <input type="hidden" name="week" value={monday} />
-                      <button type="submit" className="secondary">Cancel party</button>
-                    </form>
-                  </>
-                )}
+      <div className="sched-layout sales-layout">
+        <div className="sched-main">
+          {days.map((day) => {
+            const dayRows = rows.filter((r) => r.party_date === day);
+            return (
+              <div key={day} className="day-group">
+                <h2 id={`day-${day}`}>
+                  {dayHeading(day)}
+                  {dayRows.length > 0 ? (
+                    <span className="day-count">
+                      <span className="vh">, </span>
+                      {dayRows.length} {dayRows.length === 1 ? 'party' : 'parties'}
+                    </span>
+                  ) : null}
+                </h2>
+                {dayRows.length === 0 ? <p className="empty">No parties.</p> : null}
+                {dayRows.length > 0 ? (
+                  <ul className="party-list" aria-labelledby={`day-${day}`}>
+                    {dayRows.map((r) => {
+                      const cancelled = r.status === 'cancelled';
+                      return (
+                        <li key={r.id} className={cancelled ? 'party-item cancelled' : 'party-item'}>
+                          <div className="party-main">
+                            <p className="party-time num">
+                              {formatClock(r.start_time.slice(0, 5))}–{formatClock(r.end_time.slice(0, 5))}
+                            </p>
+                            <div className="party-who">
+                              <strong>{r.customer_name}</strong>
+                              <span className="pills">
+                                {r.assigned_host ? (
+                                  <span className="pill pill-success">
+                                    <Check />
+                                    Host assigned
+                                  </span>
+                                ) : (
+                                  <span className="pill pill-warning">
+                                    <CircleAlert />
+                                    Not assigned
+                                  </span>
+                                )}
+                                {cancelled ? (
+                                  <span className="pill pill-neutral">
+                                    <Ban />
+                                    Cancelled
+                                  </span>
+                                ) : null}
+                              </span>
+                            </div>
+                            <p className="party-kids num">{r.kids_count} kids</p>
+                            <p className="party-type">{r.party_type}</p>
+                            <div className="party-cancel">
+                              {cancelled ? null : (
+                                <CancelParty action={cancelParty} id={r.id} week={monday} customer={r.customer_name} />
+                              )}
+                            </div>
+                          </div>
+                          {cancelled ? null : (
+                            <details className="edit-fold">
+                              <summary>
+                                <ChevronRight />
+                                <span>
+                                  Edit<span className="vh"> {r.customer_name}</span>
+                                </span>
+                              </summary>
+                              <PartyForm action={updateParty} week={monday} party={r} />
+                            </details>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </div>
-            ))}
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+
+        <aside id="add-party" className="sched-rail panel add-panel" aria-labelledby="add-title" tabIndex={-1}>
+          <h2 id="add-title">Add a party</h2>
+          <PartyForm action={createParty} week={monday} labelledBy="add-title" />
+        </aside>
+      </div>
     </section>
   );
 }
@@ -93,13 +188,15 @@ function PartyForm({
   action,
   week,
   party,
+  labelledBy,
 }: {
   action: (formData: FormData) => Promise<void>;
   week: string;
   party?: Row;
+  labelledBy?: string;
 }) {
   return (
-    <form action={action} className="party-form" aria-label={party ? `Edit ${party.customer_name}` : 'New party'}>
+    <form action={action} className="party-form" aria-labelledby={labelledBy}>
       {party ? <input type="hidden" name="id" value={party.id} /> : null}
       <input type="hidden" name="week" value={week} />
       <div className="fields">
@@ -136,7 +233,7 @@ function PartyForm({
         Notes
         <input name="notes" type="text" maxLength={500} defaultValue={party?.notes ?? ''} />
       </label>
-      <button type="submit">{party ? 'Save party' : 'Add party'}</button>
+      <button type="submit" className={party ? 'btn-secondary' : undefined}>{party ? 'Save party' : 'Add party'}</button>
     </form>
   );
 }

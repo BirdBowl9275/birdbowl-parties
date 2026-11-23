@@ -101,6 +101,8 @@
   --content-max-wide: 2000px;
   --content-max-ultra: 2400px;
   --rail-width: 400px;
+  --list-max: 1400px;
+  --actions-col: 120px;
   --z-header: 20;
 
   --dur-fast: 120ms;
@@ -578,10 +580,6 @@ button:disabled {
 
 .day {
   margin-bottom: var(--space-4);
-}
-
-.cancelled {
-  opacity: 0.6;
 }
 
 .inline {
@@ -1564,6 +1562,446 @@ table.data .r {
   .sched,
   .site-header-inner {
     max-width: var(--content-max-ultra);
+  }
+}
+
+/* ---------- Sales parties ---------- */
+
+/* Sales layout measures, named so no raw widths appear below. */
+.sales {
+  --col-time: 150px;
+  --col-kids: 64px;
+  --col-type: 92px;
+  --btn-min: 140px;
+  --field-min: 140px;
+  --confirm-max: 320px;
+}
+
+/* The add panel follows the day list in the DOM (so tab order matches reading order) on every
+   width; on phones the "Add a party" button in the header jumps to it. */
+.sales .sched-rail {
+  order: 0;
+}
+
+.sales .add-panel {
+  margin-bottom: 0;
+}
+
+.sales .add-panel:focus {
+  outline: none;
+}
+
+.sales .add-panel:target {
+  border-color: var(--focus);
+}
+
+.sales .party-form label,
+.sales .add-panel label {
+  font-weight: 500;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.sales .party-form input,
+.sales .party-form select {
+  margin-top: var(--space-1);
+}
+
+.sales .party-form .fields {
+  margin-bottom: var(--space-3);
+}
+
+.sales .party-form > label > input {
+  margin-bottom: var(--space-3);
+}
+
+.sales .party-form button {
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+.sales .add-panel .fields {
+  grid-template-columns: repeat(auto-fit, minmax(var(--field-min), 1fr));
+}
+
+.party-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.party-item {
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Cancelled parties are dimmed with surface and text tokens, not opacity, so text keeps its contrast. */
+.party-item.cancelled {
+  background: var(--surface-sunken);
+  border-style: dashed;
+}
+
+.party-item.cancelled .party-time,
+.party-item.cancelled .party-who strong,
+.party-item.cancelled .party-kids,
+.party-item.cancelled .party-type {
+  color: var(--text-muted);
+}
+
+.party-item.cancelled .party-who strong {
+  font-weight: 500;
+}
+
+.party-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+}
+
+.party-main p {
+  margin: 0;
+  color: var(--text);
+}
+
+.party-time {
+  order: 1;
+  flex: 1 0 100%;
+  font-weight: 600;
+}
+
+.party-who {
+  order: 0;
+  flex: 1 0 100%;
+  min-width: 0;
+}
+
+.party-who strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.party-who .pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
+}
+
+.party-kids,
+.party-type {
+  order: 2;
+  color: var(--text-muted);
+}
+
+.party-main .party-kids,
+.party-main .party-type {
+  color: var(--text-muted);
+}
+
+.party-cancel {
+  order: 3;
+  flex: 1 0 100%;
+  margin-top: var(--space-2);
+}
+
+.cancel-fold > summary {
+  list-style: none;
+}
+
+.cancel-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cancel-fold > summary,
+.cancel-form button {
+  width: auto;
+  min-width: var(--btn-min);
+  margin: 0;
+}
+
+.cancel-fold > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.cancel-fold[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+.btn-danger-outline {
+  background: var(--surface);
+  color: var(--danger-fg);
+  border-color: var(--danger-border);
+}
+
+.btn-danger-outline:hover {
+  background: var(--danger-bg);
+}
+
+.btn-danger-outline:active {
+  background: var(--danger-bg);
+}
+
+.sales .party-form .fields input {
+  margin-bottom: 0;
+}
+
+.party-item.cancelled .pill-neutral {
+  background: var(--surface);
+  border-color: var(--border-input);
+}
+
+.confirm-box {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3-5);
+  background: var(--danger-bg);
+  border: var(--border-width) solid var(--danger-border);
+  border-radius: var(--radius-md);
+}
+
+.confirm-box .confirm-text {
+  margin: 0;
+  color: var(--danger-fg);
+  font-weight: 550;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--on-danger);
+  border-color: transparent;
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+.btn-danger:active {
+  background: var(--danger-hover);
+}
+
+.edit-fold {
+  margin-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border-subtle);
+  padding-top: var(--space-2);
+}
+
+.edit-fold summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: var(--control-lg);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 550;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.edit-fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.edit-fold summary:hover {
+  background: var(--surface-sunken);
+}
+
+.edit-fold summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.edit-fold summary .ic {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.edit-fold[open] summary .ic {
+  transform: rotate(90deg);
+}
+
+.edit-fold .party-form {
+  margin: var(--space-3) 0 0;
+}
+
+@media (min-width: 640px) {
+  .party-time,
+  .party-kids,
+  .party-type {
+    flex: 0 0 auto;
+  }
+
+  .party-cancel {
+    flex: 0 0 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .party-main {
+    flex-wrap: nowrap;
+  }
+
+  .party-time {
+    order: 0;
+    flex: 0 0 var(--col-time);
+  }
+
+  .party-who {
+    flex: 1 1 0;
+  }
+
+  .party-kids {
+    order: 0;
+    flex: 0 0 var(--col-kids);
+    text-align: right;
+  }
+
+  .party-type {
+    order: 0;
+    flex: 0 0 var(--col-type);
+  }
+
+  .party-cancel {
+    order: 0;
+    flex: 0 0 var(--actions-col);
+    /* Keep the column at its width when the confirm opens; the confirm extends left beneath the
+       row's other cells instead of widening the column and squeezing them. */
+    min-width: 0;
+    display: flex;
+    margin-top: 0;
+  }
+
+  .cancel-fold > summary {
+    min-width: 0;
+  }
+
+  .cancel-fold[open] > summary {
+    margin-bottom: 0;
+  }
+
+  /* The confirm expands in flow: the row grows taller and the confirm hangs below the trigger,
+     right-aligned and extending left under the empty space of the row, so it never covers
+     another row. */
+  .party-cancel {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .cancel-fold[open] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: max-content;
+    max-width: var(--confirm-max);
+  }
+
+  .cancel-fold[open] .confirm-box {
+    width: 100%;
+  }
+
+  .party-main:has(.cancel-fold[open]) {
+    align-items: flex-start;
+  }
+
+  .party-item {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-small);
+  }
+
+  .party-who strong {
+    font-size: var(--text-body);
+  }
+
+  .party-who .pills {
+    display: inline-flex;
+    margin: 0 0 0 var(--space-2);
+  }
+
+  .party-who strong {
+    display: inline;
+  }
+
+  .cancel-fold > summary,
+  .cancel-form button {
+    min-width: 0;
+    padding: 0 var(--space-3);
+    font-size: var(--text-small);
+  }
+
+  .edit-fold {
+    margin-top: var(--space-1);
+    padding-top: var(--space-1);
+  }
+
+  .edit-fold summary {
+    min-height: var(--control-sm);
+  }
+
+  .sales .party-form button {
+    width: auto;
+    min-width: var(--btn-min);
+  }
+}
+
+/* Dense 32px controls for fine pointers only; coarse pointers keep the 44px targets. */
+@media (min-width: 1024px) and (pointer: fine) {
+  .cancel-fold > summary,
+  .cancel-form button {
+    min-height: var(--control-sm);
+  }
+}
+
+@media (min-width: 1920px) {
+  .sales .sched-main {
+    display: block;
+  }
+
+  .sales .day-group {
+    margin-bottom: var(--space-6);
+  }
+}
+
+@media (min-width: 1440px) {
+  .sales-layout {
+    grid-template-columns: minmax(0, 1fr) var(--rail-width);
+  }
+
+  .sales .add-jump {
+    display: none;
+  }
+}
+
+@media (min-width: 1920px) {
+  /* Cap the whole page (title, week nav, banners, list, rail) to the list plus rail so every
+     edge aligns. */
+  .sales.sched {
+    max-width: calc(var(--list-max) + var(--space-6) + var(--rail-width));
+  }
+
+  .sales-layout {
+    grid-template-columns: minmax(0, var(--list-max)) var(--rail-width);
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .party-item.cancelled {
+    border-style: dashed;
   }
 }
 

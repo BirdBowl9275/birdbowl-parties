@@ -116,3 +116,9 @@ export const LogOut = (p: P) => (
     <path d="M21 12H9" />
   </Svg>
 );
+export const Ban = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m4.9 4.9 14.2 14.2" />
+  </Svg>
+);
