@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ROLES, STATUSES } from '@/lib/admin';
 import { useUsersEditor } from './users-editor';
-import { Ban, Check, Clock } from '../../components/icons';
+import { Ban, Check, CircleAlert, Clock } from '../../components/icons';
 
 export type UserRowData = {
   id: string;
@@ -30,12 +30,15 @@ export function UserRow({
   action,
   row,
   justSaved = false,
+  notSaved = false,
   scrollOnSave = true,
 }: {
   action: (formData: FormData) => Promise<void>;
   row: UserRowData;
   // True right after this row was saved: the Save button shows a green "Saved" until edited again.
   justSaved?: boolean;
+  // True when "Save all" could not write this row: it is outlined and says "Not saved".
+  notSaved?: boolean;
   // Scroll the saved row into view (single-row saves only; "Save all" stays at the top).
   scrollOnSave?: boolean;
 }) {
@@ -147,7 +150,7 @@ export function UserRow({
     <form
       ref={formRef}
       action={action}
-      className={row.status === 'removed' ? 'urow removed' : 'urow'}
+      className={['urow', row.status === 'removed' ? 'removed' : '', notSaved ? 'not-saved' : ''].filter(Boolean).join(' ')}
       aria-label={`Edit ${label}`}
       onSubmit={onSubmit}
       onChange={checkDirty}
@@ -163,6 +166,12 @@ export function UserRow({
           {pill}
         </p>
         {contact && contact !== label ? <p className="user-contact">{contact}</p> : null}
+        {notSaved ? (
+          <p className="user-not-saved">
+            <CircleAlert />
+            Not saved. Check this row and try again.
+          </p>
+        ) : null}
         {row.status === 'pending' && row.inviter_name ? (
           <p className="user-contact">Invited by {row.inviter_name}</p>
         ) : null}

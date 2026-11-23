@@ -1043,6 +1043,12 @@ table.fairness td {
   border-color: var(--info-border);
 }
 
+.banner-success {
+  color: var(--success-fg);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
 .banner-danger {
   color: var(--danger-fg);
   background: var(--danger-bg);
@@ -2685,4 +2691,20 @@ table.data .r {
   .save-all-actions button {
     flex: 1 1 auto;
   }
+}
+
+/* Admin, Users: a row "Save all" could not write. Colour plus text and icon, never colour alone. */
+.urow.not-saved {
+  border-color: var(--danger-border);
+  box-shadow: inset 0 0 0 var(--border-width) var(--danger-border);
+}
+
+.urow .user-not-saved {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-small);
+  font-weight: 550;
+  color: var(--danger-fg);
 }

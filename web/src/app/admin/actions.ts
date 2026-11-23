@@ -9,11 +9,13 @@ import {
   validateSetting,
   type ValidProfileChange,
 } from '@/lib/admin';
+import type { AdminMessageCode } from '@/lib/admin-messages';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function back(path: string, message: string): never {
-  redirect(`${path}?msg=${encodeURIComponent(message)}`);
+// The banner text lives in lib/admin-messages.ts; the address only carries its code.
+function back(path: string, code: AdminMessageCode, nothingSaved = false): never {
+  redirect(`${path}?msg=${code}${nothingSaved ? '&none=1' : ''}`);
 }
 
 function field(formData: FormData, name: string): string {
@@ -26,7 +28,7 @@ export async function updateProfile(formData: FormData) {
   const { supabase, user } = await requireAdmin();
 
   const targetId = field(formData, 'id').toLowerCase();
-  if (!UUID.test(targetId)) back(path, 'Unknown user.');
+  if (!UUID.test(targetId)) back(path, 'unknown_user');
 
   const parsed = validateProfileChange({
     role: field(formData, 'role'),
@@ -40,12 +42,12 @@ export async function updateProfile(formData: FormData) {
   const v = parsed.value;
 
   const result = await saveProfile(supabase, user.id, { id: targetId, ...v });
-  if (result === 'error') back(path, 'Could not save that change.');
-  if (result === 'missing') back(path, 'That user was not found.');
+  if (result === 'error') back(path, 'save_failed');
+  if (result === 'missing') back(path, 'user_not_found');
 
   // Say which row was saved, and jump back to it, so the row itself can confirm the save.
   // `at` makes the saved row start fresh, so its button shows "Saved" even after earlier edits.
-  redirect(`${path}?msg=${encodeURIComponent('Saved.')}&saved=${targetId}&at=${Date.now()}#user-${targetId}`);
+  redirect(`${path}?msg=saved&saved=${targetId}&at=${Date.now()}#user-${targetId}`);
 }
 
 type Supabase = Awaited<ReturnType<typeof requireAdmin>>['supabase'];
@@ -87,8 +89,8 @@ export async function updateProfiles(formData: FormData) {
   const tiers = formData.getAll('tier');
   const caps = formData.getAll('daily_cap');
   const n = ids.length;
-  if ([roles, statuses, tiers, caps].some((list) => list.length !== n)) back(path, 'Nothing was saved. Try again.');
-  if (n > BULK_MAX) back(path, `Save at most ${BULK_MAX} users at a time.`);
+  if ([roles, statuses, tiers, caps].some((list) => list.length !== n)) back(path, 'bulk_retry', true);
+  if (n > BULK_MAX) back(path, 'too_many', true);
 
   const str = (x: FormDataEntryValue) => (typeof x === 'string' ? x : '');
   const parsed = validateBulkProfileChanges(
@@ -101,19 +103,22 @@ export async function updateProfiles(formData: FormData) {
     })),
     user.id,
   );
-  if (!parsed.ok) back(path, parsed.error);
+  if (!parsed.ok) back(path, parsed.error, true);
 
   const saved: string[] = [];
+  const failed: string[] = [];
   for (const v of parsed.value) {
     if ((await saveProfile(supabase, user.id, v)) === 'ok') saved.push(v.id);
+    else failed.push(v.id);
   }
 
+  // Name the rows that did not save, so the page can mark them.
   const total = parsed.value.length;
-  const msg =
-    saved.length === total
-      ? `Saved ${total} ${total === 1 ? 'user' : 'users'}.`
-      : `Saved ${saved.length} of ${total} users. The others could not be saved; check them and try again.`;
-  redirect(`${path}?msg=${encodeURIComponent(msg)}&saved=${saved.join(',')}&at=${Date.now()}`);
+  const result =
+    failed.length === 0
+      ? `msg=saved_many&n=${total}`
+      : `msg=partial&n=${saved.length}&of=${total}&failed=${failed.join(',')}`;
+  redirect(`${path}?${result}&saved=${saved.join(',')}&at=${Date.now()}`);
 }
 
 export async function updateSetting(formData: FormData) {
@@ -129,8 +134,8 @@ export async function updateSetting(formData: FormData) {
     .update({ value: parsed.value, updated_at: new Date().toISOString() })
     .eq('key', key)
     .select('key');
-  if (error) back(path, 'Could not save that setting.');
-  if (!data || data.length === 0) back(path, 'That setting does not exist.');
+  if (error) back(path, 'setting_failed');
+  if (!data || data.length === 0) back(path, 'setting_missing');
 
-  back(path, 'Saved.');
+  back(path, 'saved');
 }

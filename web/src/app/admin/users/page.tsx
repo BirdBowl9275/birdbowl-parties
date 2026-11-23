@@ -3,7 +3,9 @@ import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
 import { BULK_MAX } from '@/lib/admin';
 import { updateProfile, updateProfiles } from '../actions';
-import { CircleAlert, Info } from '../../components/icons';
+import { CircleAlert } from '../../components/icons';
+import { AdminBanner } from '../admin-banner';
+import { one, parseIdList } from '@/lib/admin-messages';
 import { UserRow, type UserRowData } from './user-row';
 import { UsersEditor } from './users-editor';
 
@@ -27,16 +29,16 @@ function UsersHead() {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ msg?: string; saved?: string; at?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { msg, saved, at } = await searchParams;
+  const sp = await searchParams;
+  const [msg, n, of, none, at] = [sp.msg, sp.n, sp.of, sp.none, sp.at].map(one);
   // Rows just saved (one, or several from "Save all"). They get a fresh key so they start clean.
-  const savedIds = new Set(
-    (saved ?? '')
-      .split(',')
-      .slice(0, BULK_MAX)
-      .filter((s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)),
-  );
+  // Only trusted alongside a save result, so a crafted link cannot mark rows on its own.
+  const savedIds =
+    msg === 'saved' || msg === 'saved_many' || msg === 'partial' ? parseIdList(sp.saved, BULK_MAX) : new Set<string>();
+  // Rows "Save all" could not write: marked "Not saved" so they are easy to find.
+  const failedIds = msg === 'partial' ? parseIdList(sp.failed, BULK_MAX) : new Set<string>();
   const saveKey = /^\d{1,15}$/.test(at ?? '') ? at : '';
   const rowKey = (id: string) => (savedIds.has(id) ? `${id}:${saveKey}` : id);
   const single = savedIds.size === 1;
@@ -66,12 +68,7 @@ export default async function AdminUsersPage({
           Invite someone
         </Link>
       </div>
-      {msg ? (
-        <div className="banner banner-info" role="status">
-          <Info />
-          <span>{msg}</span>
-        </div>
-      ) : null}
+      <AdminBanner msg={msg} n={n} of={of} none={none} />
       {error ? (
         <div className="banner banner-danger" role="alert">
           <CircleAlert />
@@ -89,7 +86,7 @@ export default async function AdminUsersPage({
             <ul className="ulist" aria-labelledby="pending-title">
               {pending.map((r) => (
                 <li key={rowKey(r.id)}>
-                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} scrollOnSave={single} />
+                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} notSaved={failedIds.has(r.id)} scrollOnSave={single} />
                 </li>
               ))}
             </ul>
@@ -105,7 +102,7 @@ export default async function AdminUsersPage({
             <ul className="ulist" aria-labelledby="others-title">
               {others.map((r) => (
                 <li key={rowKey(r.id)}>
-                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} scrollOnSave={single} />
+                  <UserRow action={updateProfile} row={r} justSaved={savedIds.has(r.id)} notSaved={failedIds.has(r.id)} scrollOnSave={single} />
                 </li>
               ))}
             </ul>

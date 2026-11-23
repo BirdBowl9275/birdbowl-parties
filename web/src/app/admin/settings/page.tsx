@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
 import { updateSetting } from '../actions';
-import { Info } from '../../components/icons';
+import { AdminBanner } from '../admin-banner';
+import { one } from '@/lib/admin-messages';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,9 +77,9 @@ const GROUPS: Group[] = [
 export default async function AdminSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ msg?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { msg } = await searchParams;
+  const msg = one((await searchParams).msg);
   const { supabase } = await requireAdmin();
 
   const { data } = await supabase.from('settings').select('key, value').order('key');
@@ -89,12 +90,7 @@ export default async function AdminSettingsPage({
       <div className="sched-head">
         <h1 id="settings-title">Settings</h1>
       </div>
-      {msg ? (
-        <div className="banner banner-info" role="status">
-          <Info />
-          <span>{msg}</span>
-        </div>
-      ) : null}
+      <AdminBanner msg={msg} />
 
       {GROUPS.map((g) => {
         const items = g.items.filter((d) => values.has(d.key));

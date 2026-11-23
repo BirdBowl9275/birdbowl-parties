@@ -1,3 +1,5 @@
+import type { AdminMessageCode } from './admin-messages';
+
 // Validation for admin changes. Pure functions, so they can be unit tested.
 // The database still enforces who may make each change (RLS and the guard trigger).
 
@@ -15,7 +17,7 @@ export type ProfileChange = {
   targetId: string;
 };
 
-export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: string };
+export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: AdminMessageCode };
 
 export function validateProfileChange(input: ProfileChange): ValidationResult<{
   role: Role;
@@ -24,35 +26,35 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
   dailyCap: number;
 }> {
   if (!(ROLES as readonly string[]).includes(input.role)) {
-    return { ok: false, error: 'Pick a valid role.' };
+    return { ok: false, error: 'bad_role' };
   }
   if (!(STATUSES as readonly string[]).includes(input.status)) {
-    return { ok: false, error: 'Pick a valid status.' };
+    return { ok: false, error: 'bad_status' };
   }
 
   let tier: number | null = null;
   if (input.tier !== '') {
     const parsed = Number(input.tier);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > 3) {
-      return { ok: false, error: 'Tier must be 1, 2, 3 or not a host.' };
+      return { ok: false, error: 'bad_tier' };
     }
     tier = parsed;
   }
   // Viewers are read-only and never hosts; a tier would make them assignable.
   if (input.role === 'viewer' && tier !== null) {
-    return { ok: false, error: 'A viewer cannot be a host. Set the tier to not a host.' };
+    return { ok: false, error: 'viewer_tier' };
   }
 
   const cap = Number(input.dailyCap);
   if (!Number.isInteger(cap) || cap < 0 || cap > 3) {
-    return { ok: false, error: 'Daily cap must be between 0 and 3.' };
+    return { ok: false, error: 'bad_cap' };
   }
 
   // Admins cannot remove or demote themselves, so they can't lock out the last admin by accident.
   // Compare case-insensitively: Postgres matches a UUID in any case (security verifier WEB-BULK-06).
   if (input.actorId.toLowerCase() === input.targetId.toLowerCase()) {
     if (input.status !== 'active' || input.role !== 'admin') {
-      return { ok: false, error: 'You cannot change your own role or status here.' };
+      return { ok: false, error: 'self_change' };
     }
   }
 
@@ -75,20 +77,20 @@ export function validateBulkProfileChanges(
   entries: BulkEntry[],
   actorId: string,
 ): ValidationResult<ValidProfileChange[]> {
-  if (entries.length === 0) return { ok: false, error: 'There are no changes to save.' };
-  if (entries.length > BULK_MAX) return { ok: false, error: `Save at most ${BULK_MAX} users at a time.` };
+  if (entries.length === 0) return { ok: false, error: 'no_changes' };
+  if (entries.length > BULK_MAX) return { ok: false, error: 'too_many' };
 
   const seen = new Set<string>();
   const out: ValidProfileChange[] = [];
   for (const raw of entries) {
     const e = { ...raw, id: raw.id.toLowerCase() };
-    if (!UUID.test(e.id) || seen.has(e.id)) return { ok: false, error: 'Unknown user. Nothing was saved.' };
+    if (!UUID.test(e.id) || seen.has(e.id)) return { ok: false, error: 'unknown_user' };
     seen.add(e.id);
     if (e.status === 'removed') {
-      return { ok: false, error: "Nothing was saved. To remove someone, use Save on that person's row." };
+      return { ok: false, error: 'bulk_removed' };
     }
     const r = validateProfileChange({ ...e, actorId, targetId: e.id });
-    if (!r.ok) return { ok: false, error: `Nothing was saved. ${r.error}` };
+    if (!r.ok) return { ok: false, error: r.error };
     out.push({ id: e.id, ...r.value });
   }
   return { ok: true, value: out };
@@ -109,25 +111,25 @@ export function validateSetting(key: string, raw: string): ValidationResult<stri
   switch (key as SettingKey) {
     case 'fairness_window_days': {
       const n = Number(value);
-      if (!Number.isInteger(n) || n < 1 || n > 365) return { ok: false, error: 'Window must be 1 to 365 days.' };
+      if (!Number.isInteger(n) || n < 1 || n > 365) return { ok: false, error: 'bad_window' };
       return { ok: true, value: n };
     }
     case 'hostess_avg_allowance_pct': {
       const n = Number(value);
-      if (!Number.isInteger(n) || n < 0 || n > 100) return { ok: false, error: 'Allowance must be 0 to 100 percent.' };
+      if (!Number.isInteger(n) || n < 0 || n > 100) return { ok: false, error: 'bad_allowance' };
       return { ok: true, value: n };
     }
     case 'availability_cutoff_dow': {
       const n = Number(value);
-      if (!Number.isInteger(n) || n < 1 || n > 7) return { ok: false, error: 'Cutoff day must be 1 (Mon) to 7 (Sun).' };
+      if (!Number.isInteger(n) || n < 1 || n > 7) return { ok: false, error: 'bad_dow' };
       return { ok: true, value: n };
     }
     case 'availability_cutoff_time':
     case 'reveal_time':
     case 'bowling_server_only_after':
-      if (!TIME.test(value)) return { ok: false, error: 'Time must look like 08:00 or 18:30.' };
+      if (!TIME.test(value)) return { ok: false, error: 'bad_time' };
       return { ok: true, value };
     default:
-      return { ok: false, error: 'Unknown setting.' };
+      return { ok: false, error: 'unknown_setting' };
   }
 }
