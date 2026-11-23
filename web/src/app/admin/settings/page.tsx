@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
 import { updateSetting } from '../actions';
 import { Info } from '../../components/icons';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Settings' };
 
 const INTEGER_KEYS = new Set(['fairness_window_days', 'hostess_avg_allowance_pct', 'availability_cutoff_dow']);
 

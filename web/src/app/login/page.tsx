@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { AuthCard } from '../components/auth-card';
 import { CircleAlert } from '../components/icons';
 import { LoginForm } from './login-form';
@@ -26,3 +27,5 @@ export default async function LoginPage({
 
 // Session-dependent page: never prerender.
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Sign in' };

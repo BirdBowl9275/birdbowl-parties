@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthCard } from '../components/auth-card';
@@ -35,3 +36,5 @@ export default async function PendingPage() {
 
 // Session-dependent page: never prerender.
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Request received' };

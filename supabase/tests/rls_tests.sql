@@ -1,7 +1,7 @@
 -- RLS and trigger tests for 0001_init.sql. Local throwaway Postgres only.
 -- Run order: 00_auth_stub.sql, ../migrations/0001_init.sql, 0002_security_fixes.sql,
 -- 0003_pending_name_and_sales_edits.sql, 0004_add_viewer_role.sql, 0005_viewer_read_access.sql,
--- 0006_viewer_no_availability_writes.sql, rls_tests.sql
+-- 0006_viewer_no_availability_writes.sql, 0007_invited_by.sql, rls_tests.sql
 -- psql -v ON_ERROR_STOP=1 makes any failed assertion stop the run with a non-zero exit.
 -- All users, emails and UUIDs below are fake.
 
@@ -311,5 +311,24 @@ select tests.fails($$update public.profiles set email = 'spoof@test.local' where
 reset role;
 select tests.ok((select full_name from public.profiles where id = '00000000-0000-0000-0000-00000000000d') = 'Pending Person',
   '0003: pending user name was saved');
+
+-- 0007: invited_by is set by the new-user trigger from app_metadata, and users cannot change it.
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-000000000011', 'invitee@example.com', '{"full_name":"Invitee"}',
+   '{"invited_by":"00000000-0000-0000-0000-00000000000c"}'),
+  ('00000000-0000-0000-0000-000000000012', 'bogus@example.com', '{"full_name":"Bogus"}',
+   '{"invited_by":"not-a-uuid"}');
+select tests.ok((select invited_by from public.profiles where id = '00000000-0000-0000-0000-000000000011')
+                = '00000000-0000-0000-0000-00000000000c', '0007: trigger records the inviter');
+select tests.ok((select status from public.profiles where id = '00000000-0000-0000-0000-000000000011') = 'pending'
+                and (select role from public.profiles where id = '00000000-0000-0000-0000-000000000011') = 'staff',
+                '0007: an invited person starts pending with the default role');
+select tests.ok((select invited_by is null from public.profiles where id = '00000000-0000-0000-0000-000000000012'),
+                '0007: a malformed inviter id is ignored');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', false);
+set role authenticated;
+select tests.fails($$update public.profiles set invited_by = null where id = auth.uid()$$,
+                   '0007: a user cannot change their own invited_by');
+reset role;
 
 select format('ALL %s ASSERTIONS PASSED', n) as result from tests.counter;

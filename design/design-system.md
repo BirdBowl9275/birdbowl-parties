@@ -305,7 +305,9 @@ Icons: Lucide (ISC licence), 16px in dense UI, 20px on phone, 1.75px stroke, `cu
 
 Every component below is plain HTML plus CSS classes in `globals.css`, keeping today's server-action forms. Nothing requires client-side state unless marked.
 
-### 3.1 App shell and header
+### 3.1 App shell and header (updated 2026-11-23)
+
+**As shipped:** below 1024px the header is static (not sticky) and has two rows: logo and tools (theme toggle, Sign out), then the nav links on their own full-width row. From 1024px it is one sticky row (`--header-height`) with logo, links, then tools. Link labels never break mid-word (`white-space: nowrap`); whole links wrap instead. Below 1024px, when the nav holds a single link that is the current page (staff: "My schedule"), the row is hidden because it is redundant. There is no account menu or phone menu sheet; the theme toggle and a labelled Sign out sit directly in the header. The logo is the inline pin-candles mark (3.19). The anatomy below is the original proposal; where it differs, this note wins.
 
 Anatomy (signed-in screens): sticky header, 56px, `--surface`, bottom `--border`, `z: --z-header`.
 - Left: logo mark (32px red circle asset, supplied by Jeff) + "Parties" in `title-3`. Links to the role's home (`homePathForRole`).
@@ -383,7 +385,9 @@ Checkbox: 16px box (hit area 24px through the label), radius `--radius-xs`, bord
 
 Segmented control, 36px (44px phone), `--surface-sunken` track, selected segment `--surface` with `--shadow-sm` and `--text`; unselected `--text-muted`. ARIA fixed per audit finding 14: `role="tablist"`, each tab `role="tab"`, `aria-selected`, `aria-controls` pointing at a `role="tabpanel"` wrapper with `aria-labelledby`. Left/Right arrow moves selection, Home/End jump; roving tabindex. Admin Users/Settings move into the header, so the admin tab strip is retired (links are unchanged).
 
-### 3.9 Status pills
+### 3.9 Status pills (updated 2026-11-23)
+
+**As shipped:** staff pills read "Details hidden" (neutral, lock) before the reveal and "Details shown" (success, lock-open) after it, replacing "Details on the morning" and "Revealed" in the table. Read-only viewers see a neutral "View only" pill beside the page title (3.19). **Party type tags** are not status pills: they are square tags (`--radius-xs`) with an icon and word, Bowling in brand red and Arcade (database value `other`) in violet. Round pills (`--radius-full`) mean status only.
 
 22px tall, padding 0 8px, `caption`, radius full, 1px border, 12px icon. Always icon + word.
 
@@ -418,7 +422,9 @@ Phone: every table with more than three columns becomes a card list (3.11). Neve
 
 `--surface`, 1px `--border`, `--radius-md`, padding 16px, gap 12px between cards. Title line `body-strong`, meta line `small` `--text-muted` with `numeric`, pills top-right. Edit forms inside cards stack fields in one column (two columns for paired fields: Start/End, Kids/Type). Cancelled card: `--surface-sunken` fill, text `--text-muted`, Cancelled pill, no form (parity item 5). No opacity dimming (it fails contrast).
 
-### 3.12 Theme toggle (new control, audit finding 3)
+### 3.12 Theme toggle (new control, audit finding 3) (updated 2026-11-23)
+
+**As shipped:** a three-option control (Light, Dark, System) as specified. Segments are 44px tall; 32px only at 1024px and up with a fine pointer. On the sign-in card the toggle is icon-only at every width and the labels stay available to assistive technology.
 
 Three-option segmented control: Light (`sun`), Dark (`moon`), System (`monitor`). Each segment is a radio with a visible text label at laptop+ and icon + `aria-label` on phone. Default System. Setting writes `data-theme` on `<html>` and stores the choice in `localStorage` (key `theme`); System removes the attribute. An inline script in `<head>` applies the stored value before paint to avoid a flash. Requires a small client component; no data, role or server change. Keyboard: arrow keys within the radio group.
 
@@ -438,7 +444,9 @@ Login and pending error lines use the danger banner style compactly beneath the 
 
 Sales rows show a summary; "Edit" (ghost, `pencil`) expands the existing edit form beneath the row using native `<details>`/`<summary>` (no JS). Open state: row gets `--surface-sunken` and a 2px left bar in `--border-input`. Escape is not bound (native behaviour). This is a layout change only: the form, fields and server action are unchanged. Listed for Jeff's sign-off in section 7.
 
-### 3.16 Empty, loading and error states
+### 3.16 Empty, loading and error states (updated 2026-11-23)
+
+**As shipped:** the staff empty state is the single line "No upcoming parties." (class `empty`); the extra guidance sentence in the table was not built. Loading: `loading.tsx` for `/app`, `/manager/schedule`, `/sales/parties` and `/admin` shows short skeleton bars (`--surface-sunken`) inside `role="status"` with a visually hidden "Loading…"; the pulse stops under `prefers-reduced-motion`.
 
 | Screen | Empty copy (existing text kept, next step added as text only) | Loading | Error |
 |---|---|---|---|
@@ -462,11 +470,18 @@ Deliberately omitted. The app has at most five destinations; a command palette a
 
 ---
 
+### 3.19 Logo and read-only viewer mode (updated 2026-11-23)
+
+- **Logo:** the pin-candles mark (a cake whose candles are bowling pins, on a Bird Bowl red tile), drawn as inline SVG in `web/src/app/components/party-logo.tsx` (`PartyLogo`, decorative; the name is always beside it). The same SVG is the favicon (data URL). The PNG logo is not used.
+- **View only:** where the signed-in person cannot change anything (viewers on the sales and manager screens), the add rail and edit, cancel, assign, lock and save controls are not shown, the list takes the full width, and a neutral "View only" pill sits beside the page title. Display only; permissions are unchanged.
+
 ## 4. Screen layouts
 
 Each screen at phone (390px), laptop (1280px) and ultrawide (2560px; rules apply from 1920px).
 
-### 4.1 Login `/login` (parity 1, 3)
+### 4.1 Login `/login` (parity 1, 3) (updated 2026-11-23)
+
+**As shipped:** the card is 400px wide and sits 12vh from the top on laptops (not 30%). There is no "Bird Bowl" footer line, because the card's brand row already carries the logo and name. The theme toggle is icon-only. The heading is 28px (`--auth-display`). Each route has its own page title ("Sign in · Parties").
 
 - Primary action: "Email me a code" / "Text me a code", then "Sign in".
 - Hierarchy: logo mark (48px), `display` "Sign in", description, removed banner (if `reason=removed`), segmented Email/Phone tabs, field, error line, primary button, secondary "Use a different email/number" on the code step.
@@ -479,7 +494,9 @@ Each screen at phone (390px), laptop (1280px) and ultrawide (2560px; rules apply
 
 Same frame as login. `display` "Request received", explanation text, "Your name" field + "Save name" (secondary), status line, then "Sign out" (ghost). Phone: full width controls. No nav links.
 
-### 4.2 Staff `/app` (parity 4, 10)
+### 4.2 Staff `/app` (parity 4, 10) (updated 2026-11-23)
+
+**As shipped:** empty state is "No upcoming parties." Below 1024px the header nav row is hidden for staff (3.1); the in-page Sign out button stays. Page title "My schedule · Parties".
 
 - Primary task: "When am I working?" No primary button.
 - Hierarchy: `display` "Your schedule", one-line description (existing text), then a list grouped by day ("Saturday, Nov 28" as `title-3`). Each slot card: time range in `title-2` with `numeric` ("2:00 to 4:00 p.m."), then either the neutral pill "Details on the morning" or, after reveal, the info pill "Revealed" and a details block: customer (`body-strong`), kids and type (`small`), notes (`body`, wraps). Nothing else is shown before reveal (the `my_schedule` function controls this; the design adds no field).
@@ -506,7 +523,9 @@ Same frame as login. `display` "Request received", explanation text, "Your name"
 - Ultrawide (1920+): true weekly grid. Seven day columns (Mon to Sun) of min 220px, each a vertical stack of compact party cards (time, customer, kids, type, host select, lock chip, save). Fairness rail stays on the right at 360px. Content max width 2000px, centred. Day columns with no parties show "No parties." in `--text-subtle`. This is the "weekly schedule grid" from `SPEC.md`.
 - Open question (not designed): whether the "manager (viewer)" users should see the controls disabled. Section 7.
 
-### 4.5 Admin users `/admin/users` (parity 8, 10)
+### 4.5 Admin users `/admin/users` (parity 8, 10) (updated 2026-11-23)
+
+**As shipped:** rows use the list pattern (`ul`/`li` with labelled controls and an `aria-hidden` visible header), not the table-role grid. Pending users sit together in one warning-toned frame at the top of the page, not a left bar on each row; with nobody pending the frame is dropped and a quiet empty line shows. The "removed" status option stays disabled until JavaScript loads, and choosing it asks for a confirm.
 
 - Primary action: Save on a pending row (approve by setting Status to active).
 - Hierarchy: `title-1` "Users"; banners; "Pending approval (N)" section, highlighted with a warning-tone left bar on each row; "Everyone else (N)".

@@ -72,6 +72,12 @@ describe('isPathAllowed', () => {
     expect(isPathAllowed({ kind: 'pending' }, '/admin')).toBe(false);
   });
 
+  it('lets an approved user reach invite (the page checks the role), not pending users', () => {
+    expect(isPathAllowed({ kind: 'app' }, '/invite')).toBe(true);
+    expect(isPathAllowed({ kind: 'pending' }, '/invite')).toBe(false);
+    expect(isPathAllowed({ kind: 'login' }, '/invite')).toBe(false);
+  });
+
   it('does not treat a path prefix as the app', () => {
     expect(isPathAllowed({ kind: 'app' }, '/application')).toBe(false);
   });

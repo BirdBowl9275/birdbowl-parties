@@ -77,7 +77,8 @@ export function isPathAllowed(decision: AccessDecision, pathname: string): boole
         pathname === '/sales' ||
         pathname.startsWith('/sales/') ||
         pathname === '/manager' ||
-        pathname.startsWith('/manager/')
+        pathname.startsWith('/manager/') ||
+        pathname === '/invite'
       );
   }
 }

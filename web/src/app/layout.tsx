@@ -4,7 +4,7 @@ import { SiteHeader } from './site-header';
 import { PARTY_LOGO_SVG } from './components/party-logo';
 
 export const metadata: Metadata = {
-  title: 'Party Hostess Scheduler',
+  title: { default: 'Parties', template: '%s · Parties' },
   description: 'Bird Bowl party host schedule',
   robots: { index: false, follow: false },
   // Inline data URL: the middleware redirects signed-out requests for files, so a separate

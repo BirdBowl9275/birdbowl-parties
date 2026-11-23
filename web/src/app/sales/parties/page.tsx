@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requirePartiesView } from '@/lib/sales-guard';
 import { createParty, cancelParty, updateParty } from '../actions';
@@ -8,6 +9,8 @@ import { PartyType, PARTY_TYPE_LABEL } from '../../components/party-type';
 import { CancelParty } from './cancel-party';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Parties list' };
 
 // "Saturday, Nov 28" from a YYYY-MM-DD key. UTC so the day never shifts with the server's zone.
 function dayHeading(day: string): string {
@@ -86,9 +89,14 @@ export default async function SalesPartiesPage({
           {readOnly ? (
             <span className="pill pill-neutral">View only</span>
           ) : (
-            <a className="btn add-jump" href="#add-party">
-              Add a party
-            </a>
+            <>
+              <Link className="btn btn-secondary" href="/invite">
+                Invite someone
+              </Link>
+              <a className="btn add-jump" href="#add-party">
+                Add a party
+              </a>
+            </>
           )}
         </div>
       </div>

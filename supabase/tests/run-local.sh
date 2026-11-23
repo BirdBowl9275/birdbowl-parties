@@ -23,6 +23,7 @@ for f in tests/00_auth_stub.sql \
          migrations/0004_add_viewer_role.sql \
          migrations/0005_viewer_read_access.sql \
          migrations/0006_viewer_no_availability_writes.sql \
+         migrations/0007_invited_by.sql \
          tests/rls_tests.sql; do
   echo "== $f"
   if ! $PSQL -d rlstest -f "$f" >"$DIR/out.txt" 2>&1; then

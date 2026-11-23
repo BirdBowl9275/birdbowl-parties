@@ -26,6 +26,8 @@ export function CancelParty({
 
   useEffect(() => {
     setHydrated(true);
+    // A confirm opened before hydration is already open in the DOM; pick that up.
+    setIsOpen(detailsRef.current?.open ?? false);
   }, []);
 
   function close() {

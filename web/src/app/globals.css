@@ -539,11 +539,6 @@ button:disabled {
   min-width: 0;
 }
 
-.auth-brand img {
-  display: block;
-  border-radius: var(--radius-full);
-}
-
 .auth-card h1 {
   font-size: var(--auth-display);
 }
@@ -790,13 +785,6 @@ table.fairness td {
   height: 100%;
 }
 
-.brand-link img {
-  display: block;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-}
-
 .site-nav {
   order: 3;
   flex: 1 0 100%;
@@ -929,8 +917,21 @@ table.fairness td {
 
 @media (min-width: 640px) {
   .theme-opt {
-    min-height: var(--control-sm);
     padding: 0 var(--space-3);
+  }
+}
+
+/* Dense 32px segments for fine pointers only; touch tablets keep the 44px targets. */
+@media (min-width: 1024px) and (pointer: fine) {
+  .theme-opt {
+    min-height: var(--control-sm);
+  }
+}
+
+/* Staff have a single link that is the current page: below 1024px the row is redundant. */
+@media (max-width: 1023.98px) {
+  .site-nav:has(> a:only-child[aria-current='page']) {
+    display: none;
   }
 }
 
@@ -2029,6 +2030,8 @@ table.data .r {
        row's other cells instead of widening the column and squeezing them. */
     min-width: 0;
     display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     margin-top: 0;
   }
 
@@ -2043,11 +2046,6 @@ table.data .r {
   /* The confirm expands in flow: the row grows taller and the confirm hangs below the trigger,
      right-aligned and extending left under the empty space of the row, so it never covers
      another row. */
-  .party-cancel {
-    flex-direction: column;
-    align-items: flex-end;
-  }
-
   .cancel-fold[open] {
     display: flex;
     flex-direction: column;
@@ -2095,10 +2093,6 @@ table.data .r {
     padding-top: var(--space-1);
   }
 
-  .edit-fold summary {
-    min-height: var(--control-sm);
-  }
-
   .sales .party-form button {
     width: auto;
     min-width: var(--btn-min);
@@ -2108,7 +2102,8 @@ table.data .r {
 /* Dense 32px controls for fine pointers only; coarse pointers keep the 44px targets. */
 @media (min-width: 1024px) and (pointer: fine) {
   .cancel-fold > summary,
-  .cancel-form button {
+  .cancel-form button,
+  .edit-fold summary {
     min-height: var(--control-sm);
   }
 }
@@ -2142,7 +2137,6 @@ table.data .r {
 
   .sales-layout {
     grid-template-columns: minmax(0, var(--list-max)) var(--rail-width);
-    justify-content: center;
   }
 }
 
@@ -2590,4 +2584,51 @@ table.data .r {
   .urow.removed {
     border-style: dashed;
   }
+}
+
+/* ---------- Loading placeholders ---------- */
+
+.loading-skeleton {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--list-max);
+  padding-block: var(--space-4);
+}
+
+.skeleton-line {
+  height: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 40%;
+  height: var(--space-6);
+}
+
+.skeleton-short {
+  width: 65%;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+/* ---------- Invite someone ---------- */
+
+.invite {
+  max-width: 40rem;
+}
+
+.invite-panel .party-form {
+  margin-top: var(--space-4);
 }

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireScheduleView } from '@/lib/manager-guard';
 import { reassignParty, saveProposedAssignments } from '../actions';
@@ -9,6 +10,8 @@ import { PartyType } from '../../components/party-type';
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Info, Lock, LockOpen, TriangleAlert } from '../../components/icons';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Weekly schedule' };
 
 type PartyRow = {
   id: number;
@@ -213,9 +216,14 @@ export default async function ManagerSchedulePage({
           {readOnly ? (
             <span className="pill pill-neutral">View only</span>
           ) : (
-            <Link className="btn" href={`/manager/schedule?week=${monday}&preview=1`}>
-              Preview the assignment for this week
-            </Link>
+            <>
+              <Link className="btn btn-secondary" href="/invite">
+                Invite someone
+              </Link>
+              <Link className="btn" href={`/manager/schedule?week=${monday}&preview=1`}>
+                Preview the assignment for this week
+              </Link>
+            </>
           )}
         </div>
       </div>

@@ -1,9 +1,13 @@
+import Link from 'next/link';
+import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
 import { updateProfile } from '../actions';
 import { CircleAlert, Info } from '../../components/icons';
 import { UserRow, type UserRowData } from './user-row';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Users' };
 
 function UsersHead() {
   return (
@@ -28,10 +32,17 @@ export default async function AdminUsersPage({
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, phone, status, role, tier, daily_cap')
+    .select('id, full_name, email, phone, status, role, tier, daily_cap, invited_by')
     .order('created_at', { ascending: true });
 
-  const rows = (data ?? []) as UserRowData[];
+  const raw = (data ?? []) as UserRowData[];
+  // Show who invited each pending person, so a familiar-looking name can't hide an unknown inviter.
+  // The inviter is shown by name AND email: email cannot be changed by the user (profile guard),
+  // so a renamed account cannot pass itself off as someone else (security verifier M1).
+  const nameById = new Map(
+    raw.map((r) => [r.id, r.email ? (r.full_name ? `${r.full_name} (${r.email})` : r.email) : r.full_name || 'Unknown']),
+  );
+  const rows = raw.map((r) => ({ ...r, inviter_name: r.invited_by ? nameById.get(r.invited_by) ?? 'Unknown' : null }));
   const pending = rows.filter((r) => r.status === 'pending');
   const others = rows.filter((r) => r.status !== 'pending');
 
@@ -39,6 +50,9 @@ export default async function AdminUsersPage({
     <section className="sched admin" aria-labelledby="users-title">
       <div className="sched-head">
         <h1 id="users-title">Users</h1>
+        <Link className="btn btn-secondary" href="/invite">
+          Invite someone
+        </Link>
       </div>
       {msg ? (
         <div className="banner banner-info" role="status">

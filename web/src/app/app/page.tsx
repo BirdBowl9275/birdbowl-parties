@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
@@ -6,6 +7,8 @@ import { PartyType } from '../components/party-type';
 import { CircleAlert, Lock, LockOpen } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'My schedule' };
 
 type ScheduleRow = {
   party_id: number;
@@ -67,7 +70,7 @@ export default async function AppHomePage() {
           </h2>
           <ul className="staff-list" aria-labelledby={`day-${day.date}`}>
             {day.rows.map((r) => (
-              <li key={r.party_id} className={r.revealed ? 'staff-item' : 'staff-item staff-hidden'}>
+              <li key={r.party_id} className="staff-item">
                 <p className="staff-time num">
                   <span className="vh">
                     Party, {weekdayLabel(r.party_date)} {formatClock(r.start_time)} to {formatClock(r.end_time)}

@@ -13,6 +13,9 @@ export type UserRowData = {
   role: string;
   tier: number | null;
   daily_cap: number;
+  invited_by?: string | null;
+  // Display only: the inviter's name, looked up on the page (security review WEB-INV-01).
+  inviter_name?: string | null;
 };
 
 // One user's edit form. The form, its fields and the server action are exactly as before; this
@@ -23,8 +26,13 @@ export type UserRowData = {
 // anyone. Once the page is hydrated the option is enabled, and a Save that would set the status to
 // removed is intercepted: it opens the confirm instead, and only "Yes, remove" submits.
 export function UserRow({ action, row }: { action: (formData: FormData) => Promise<void>; row: UserRowData }) {
-  const label = row.full_name || row.email || row.phone || 'No name yet';
-  const contact = row.email ?? row.phone ?? '';
+  // Pending rows lead with the email: approve on the address, never on the typed name, which the
+  // inviter chose and the person can change (security verifier on WEB-INV-01).
+  const pending = row.status === 'pending';
+  const label = pending
+    ? row.email || row.phone || row.full_name || 'No email'
+    : row.full_name || row.email || row.phone || 'No name yet';
+  const contact = pending ? row.full_name || '' : row.email ?? row.phone ?? '';
   const [hydrated, setHydrated] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const statusRef = useRef<HTMLSelectElement>(null);
@@ -94,6 +102,9 @@ export function UserRow({ action, row }: { action: (formData: FormData) => Promi
           {pill}
         </p>
         {contact && contact !== label ? <p className="user-contact">{contact}</p> : null}
+        {row.status === 'pending' && row.inviter_name ? (
+          <p className="user-contact">Invited by {row.inviter_name}</p>
+        ) : null}
       </div>
       <div className="ucell ucell-status">
         <label htmlFor={`${textId}-status`}>Status</label>
