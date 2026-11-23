@@ -1,7 +1,7 @@
 -- RLS and trigger tests for 0001_init.sql. Local throwaway Postgres only.
 -- Run order: 00_auth_stub.sql, ../migrations/0001_init.sql, 0002_security_fixes.sql,
 -- 0003_pending_name_and_sales_edits.sql, 0004_add_viewer_role.sql, 0005_viewer_read_access.sql,
--- 0006_viewer_no_availability_writes.sql, 0007_invited_by.sql, rls_tests.sql
+-- 0006 … 0009 (see run-local.sh), rls_tests.sql
 -- psql -v ON_ERROR_STOP=1 makes any failed assertion stop the run with a non-zero exit.
 -- All users, emails and UUIDs below are fake.
 
@@ -335,5 +335,19 @@ reset role;
 select tests.ok(has_column_privilege('service_role', 'public.profiles', 'invited_by', 'select'), '0008: service_role can read invited_by');
 select tests.ok(not has_column_privilege('service_role', 'public.profiles', 'email', 'select'), '0008: service_role cannot read email');
 select tests.ok(not has_table_privilege('service_role', 'public.profiles', 'update'), '0008: service_role cannot update profiles');
+
+-- 0009: Supabase sets app_metadata after creating the user; the update trigger records the inviter.
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-000000000013', 'late@example.com', '{"full_name":"Late Tag"}');
+select tests.ok((select invited_by is null from public.profiles where id = '00000000-0000-0000-0000-000000000013'),
+                '0009: no inviter before app_metadata arrives');
+update auth.users set raw_app_meta_data = '{"provider":"email","invited_by":"00000000-0000-0000-0000-00000000000b"}'
+ where id = '00000000-0000-0000-0000-000000000013';
+select tests.ok((select invited_by from public.profiles where id = '00000000-0000-0000-0000-000000000013')
+                = '00000000-0000-0000-0000-00000000000b', '0009: inviter recorded when app_metadata is set later');
+update auth.users set raw_app_meta_data = '{"provider":"email","invited_by":"00000000-0000-0000-0000-00000000000a"}'
+ where id = '00000000-0000-0000-0000-000000000013';
+select tests.ok((select invited_by from public.profiles where id = '00000000-0000-0000-0000-000000000013')
+                = '00000000-0000-0000-0000-00000000000b', '0009: an existing inviter is never overwritten');
 
 select format('ALL %s ASSERTIONS PASSED', n) as result from tests.counter;
