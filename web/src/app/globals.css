@@ -779,6 +779,17 @@ table.fairness td {
   border-radius: var(--radius-sm);
 }
 
+.party-logo {
+  display: block;
+  flex: none;
+}
+
+.party-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .brand-link img {
   display: block;
   width: 32px;

@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { homePathForRole } from '@/lib/access';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import logo from './brand-logo-128.png';
 import { HeaderNav, type NavLink } from './components/header-nav';
 import { LogOut } from './components/icons';
+import { PartyLogo } from './components/party-logo';
 import { ThemeToggle } from './components/theme-toggle';
 
 const MY_SCHEDULE: NavLink = { href: '/app', label: 'My schedule' };
@@ -61,7 +61,7 @@ export async function SiteHeader() {
       </a>
       <div className="site-header-inner">
         <Link href={homePathForRole(role)} className="brand-link">
-          <img src={logo.src} width={32} height={32} alt="Bird Bowl" />
+          <PartyLogo size={32} />
           <span>Parties</span>
         </Link>
         <HeaderNav links={linksForRole(role)} />

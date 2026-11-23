@@ -1,4 +1,4 @@
-import logo from '../brand-logo-128.png';
+import { PartyLogo } from './party-logo';
 import { ThemeToggle } from './theme-toggle';
 
 // Shared shell for the signed-out screens (login) and the not-yet-approved screen (pending).
@@ -16,7 +16,7 @@ export function AuthCard({
     <section className="auth-card" aria-labelledby={titleId}>
       <div className="auth-brand">
         <span className="auth-brand-id">
-          <img src={logo.src} width={48} height={48} alt="" />
+          <PartyLogo size={48} />
           <span>Bird Bowl Parties</span>
         </span>
         <ThemeToggle />

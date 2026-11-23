@@ -26,4 +26,4 @@ Decision (2026-11-23): Dion and Susie are read-only. Sophia has the same access 
 - 0004, 0005, 0006 applied. As a viewer: parties visible 11, own profile only, host list 5, availability 0; edits to parties, locks, settings changed 0 rows; availability policies block viewers.
 - Browser as a viewer: Schedule and Parties read-only at laptop and phone widths; /admin/users returns 404; the preview link is ignored.
 - tsc clean, vitest 75/75. Security review: no Critical/High/Medium; Low items fixed (see design/viewer-role-security.md, verified).
-- Not yet run: `sh supabase/tests/run-local.sh` (local RLS suite; the sandbox cannot start Postgres).
+- Local RLS suite (0001 to 0006): ALL 75 ASSERTIONS PASSED (run by Jeff, 2026-11-23).

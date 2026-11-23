@@ -23,8 +23,8 @@ No Critical, High or Medium findings. The change REDUCES access: Dion and Susie 
 - Every server action calls `requireManager()` or `requireSalesAccess()`, which exclude viewers.
 - `schedule_hosts()`: security definer, fixed search_path, four columns, role-gated; anon and public have no EXECUTE.
 - Every deploy order fails closed.
+- Local RLS suite run by Jeff on 2026-11-23 (`sh supabase/tests/run-local.sh`, migrations 0001 to 0006): ALL 75 ASSERTIONS PASSED, OK.
 
 ## Not verified
-- The local RLS suite (`sh supabase/tests/run-local.sh`): the sandbox cannot start Postgres; Jeff to run.
 - Production roles, tiers and assignments for Dion, Susie and Sophia.
 - Production default function grants (test project: anon has no EXECUTE).
