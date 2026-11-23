@@ -464,7 +464,7 @@ button:disabled {
   margin-bottom: var(--space-4);
 }
 
-/* ---------- Cards and legacy screens (login, pending, staff, sales, admin) ---------- */
+/* ---------- Cards and legacy screens (login, pending, staff, sales) ---------- */
 
 .card {
   width: 100%;
@@ -504,65 +504,6 @@ button:disabled {
 .tab-active {
   color: var(--text);
   border-bottom-color: var(--brand-fg);
-}
-
-.admin-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-  border-bottom: var(--border-width) solid var(--border);
-}
-
-.admin-nav a {
-  padding: var(--space-2) 0;
-  color: var(--text-muted);
-  text-decoration: none;
-  border-bottom: var(--border-width-strong) solid transparent;
-}
-
-.admin-nav a[aria-current='page'] {
-  color: var(--text);
-  border-bottom-color: var(--brand-fg);
-}
-
-.admin-nav button {
-  width: auto;
-  margin-top: 0;
-}
-
-.user-row {
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
-  margin-bottom: var(--space-3);
-  background: var(--surface);
-}
-
-.user-row .user-name {
-  margin-bottom: var(--space-3);
-  color: var(--text);
-  overflow-wrap: anywhere;
-}
-
-.fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.user-row label {
-  font-weight: 500;
-  font-size: var(--text-small);
-  color: var(--text-muted);
-  margin-bottom: 0;
-}
-
-.user-row button {
-  width: auto;
-  min-width: 120px;
 }
 
 .week-nav {
@@ -2146,5 +2087,302 @@ table.data .r {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Admin: users and settings ---------- */
+
+.admin {
+  --admin-max: 1200px;
+  --col-status: 128px;
+  --col-role: 124px;
+  --col-tier: 184px;
+  --col-cap: 96px;
+  --field-min: 140px;
+  --setting-input: 160px;
+  --setting-text-max: 520px;
+  --settings-max: 720px;
+  max-width: var(--admin-max);
+}
+
+.admin-section {
+  margin-bottom: var(--space-6);
+}
+
+.admin-section > h2 {
+  margin-top: 0;
+}
+
+/* Pending approvals sit apart at the top, in a warning-toned frame. */
+.admin-pending {
+  padding: var(--space-4);
+  background: var(--warning-bg);
+  border: var(--border-width) solid var(--warning-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-pending > h2 {
+  color: var(--warning-fg);
+}
+
+.ulist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ulist-head {
+  display: none;
+}
+
+.urow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.urow.removed {
+  background: var(--surface-sunken);
+  border-style: dashed;
+}
+
+.ucell-user,
+.ucell-save,
+.ucell-confirm {
+  grid-column: 1 / -1;
+}
+
+.urow .user-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.urow .user-contact {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.urow.removed .user-name {
+  color: var(--text-muted);
+}
+
+.urow .ucell label {
+  margin: 0 0 var(--space-1);
+  font-weight: 500;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.urow select {
+  min-width: 0;
+}
+
+.urow .ucell-save button {
+  width: 100%;
+}
+
+.urow .confirm-actions button {
+  width: auto;
+  min-width: var(--col-cap);
+}
+
+@media (min-width: 640px) {
+  .urow {
+    grid-template-columns: repeat(auto-fit, minmax(var(--field-min), 1fr));
+  }
+
+  .urow .ucell-save button {
+    width: auto;
+    min-width: var(--actions-col);
+  }
+}
+
+/* Laptop and wider: one aligned grid row per user under a column header. The labels stay in the
+   markup for screen readers; the header row carries the names visually. */
+@media (min-width: 1024px) {
+  .ulist-head,
+  .urow {
+    grid-template-columns:
+      minmax(0, 1fr) var(--col-status) var(--col-role) var(--col-tier) var(--col-cap)
+      var(--actions-col);
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  .ulist-head {
+    display: grid;
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-1);
+    font-size: var(--text-small);
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    color: var(--text-muted);
+  }
+
+  .ulist {
+    gap: var(--space-1-5);
+  }
+
+  .urow {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+  }
+
+  .ucell-user,
+  .ucell-save {
+    grid-column: auto;
+  }
+
+  .urow .ucell label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .urow .ucell-save button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .urow .user-name strong {
+    font-size: var(--text-body);
+  }
+
+  .ucell-confirm {
+    grid-column: 1 / -1;
+    justify-self: end;
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  /* Pull the pending frame out by its padding and border so its columns line up with the
+     "Everyone else" columns below. */
+  .admin-pending {
+    margin-inline: calc(-1 * (var(--space-4) + var(--border-width)));
+  }
+}
+
+/* Dense 32px controls for fine pointers only; coarse pointers keep the 44px targets. */
+@media (min-width: 1024px) and (pointer: fine) {
+  .urow select,
+  .urow .ucell-save button,
+  .urow .confirm-actions button {
+    min-height: var(--control-sm);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--text-small);
+  }
+
+  .urow select {
+    padding-left: var(--space-2);
+    padding-right: var(--space-1);
+  }
+}
+
+/* Settings */
+
+.admin-settings {
+  max-width: var(--settings-max);
+}
+
+.admin-group {
+  padding: var(--space-4);
+}
+
+.admin-group > h2 {
+  margin: 0 0 var(--space-1);
+}
+
+.admin-group .group-blurb {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-small);
+}
+
+.setting {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: var(--border-width) solid var(--border-subtle);
+}
+
+.setting-text label {
+  margin: 0;
+}
+
+.setting-help {
+  margin: var(--space-0-5) 0 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.setting-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.setting-control input {
+  width: var(--setting-input);
+  margin: 0;
+}
+
+.setting-unit {
+  width: var(--space-16);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.setting-control button {
+  width: auto;
+  min-width: var(--actions-col);
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .setting {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .setting-control {
+    flex-wrap: nowrap;
+  }
+
+  .setting-control button {
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine) {
+  .setting-control input,
+  .setting-control button {
+    min-height: var(--control-md);
+  }
+}
+
+@media (forced-colors: active) {
+  .urow.removed {
+    border-style: dashed;
   }
 }

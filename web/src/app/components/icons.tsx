@@ -116,6 +116,12 @@ export const LogOut = (p: P) => (
     <path d="M21 12H9" />
   </Svg>
 );
+export const Clock = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 6v6l4 2" />
+  </Svg>
+);
 export const Ban = (p: P) => (
   <Svg {...p}>
     <circle cx="12" cy="12" r="10" />

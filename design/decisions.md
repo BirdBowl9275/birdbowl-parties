@@ -27,6 +27,10 @@ Jeff approved the pilot's visual direction (manager schedule, header, tokens, li
 
 - **Staff slot pills (phase 3):** "Details hidden" (neutral, lock icon) before the reveal and "Details shown" (success green, lock-open icon) after it. This replaces spec 3.9's "Details on the morning" / "Revealed" (info blue), because blue is reserved for the focus ring (decision 9) and the shorter labels fit a phone card. design-system.md 3.9, 4.2 and 7 still show the old wording; this entry supersedes them.
 - **Staff Sign out:** kept both the header Sign out and the in-page Sign out button on /app (spec 3.1, 4.2, 4.7 #10), so staff on phones have a labelled button.
+- **Admin rows use the list pattern (critic M7):** per-row edit forms on /admin/users use `ul`/`li` with labelled controls and an `aria-hidden` visible header, the same as sales parties. The table-role pattern (spec 3.10) stays for the manager week only. Spec 3.10 is superseded for admin rows.
+- **Admin settings grouping (critic P7):** Fair host assignment / Availability deadline / Day-of timing, with the bowling cutoff under Day-of timing, instead of spec 4.6's Availability / Assignment / Reveal. Display only; the six keys, forms and Save buttons are unchanged.
+- **Pending users in one frame (critic N5):** pending users sit in one warning-toned frame at the top of /admin/users, instead of spec 4.5's left bar on each row. When nobody is pending the frame is dropped and the empty text shows quietly.
+- **No-JS remove trade-off:** the "removed" option on /admin/users is disabled until JavaScript has loaded, so nobody can be removed by accident on a first press. With JavaScript off an admin cannot remove a user on this screen; other edits still work. Do not re-enable the option without a confirm, and do not add a second no-JS removal path.
 
 ## Jeff's answers to open decisions (2026-11-23)
 
