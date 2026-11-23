@@ -289,7 +289,7 @@ export default async function ManagerSchedulePage({
                           </span>
                         )}
                         {p.assignment_locked ? (
-                          <span className="pill pill-info">
+                          <span className="pill pill-neutral">
                             <Lock />
                             Locked
                           </span>

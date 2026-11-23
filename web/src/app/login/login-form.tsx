@@ -8,7 +8,8 @@ import { normalizePhone } from '@/lib/phone';
 type Channel = 'email' | 'phone';
 type Step = 'contact' | 'code';
 
-export function LoginForm() {
+// `notice` (the removed-access banner) is rendered below the intro, where the page used to put it.
+export function LoginForm({ notice }: { notice?: React.ReactNode }) {
   const [channel, setChannel] = useState<Channel>('email');
   const [step, setStep] = useState<Step>('contact');
   const [contact, setContact] = useState('');
@@ -128,6 +129,13 @@ export function LoginForm() {
 
   return (
     <>
+      {/* The intro follows the chosen channel (Email or Phone). */}
+      <p className="auth-lede">
+        {channel === 'email'
+          ? 'Enter your email. We will send you a one-time code. No password needed.'
+          : 'Enter your mobile number. We will text you a one-time code. No password needed.'}
+      </p>
+      {notice}
       <div
         role="tablist"
         aria-label="Sign in with"

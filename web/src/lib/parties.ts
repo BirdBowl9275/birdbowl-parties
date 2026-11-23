@@ -52,7 +52,7 @@ export function validateParty(input: PartyInput): ValidationResult<PartyValue> {
   }
 
   if (!(PARTY_TYPES as readonly string[]).includes(input.partyType)) {
-    return { ok: false, error: 'Pick bowling or other.' };
+    return { ok: false, error: 'Pick Bowling or Arcade.' };
   }
 
   const customerName = input.customerName.trim();
