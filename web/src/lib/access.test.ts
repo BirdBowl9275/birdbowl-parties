@@ -9,8 +9,8 @@ describe('homePathForRole', () => {
     expect(homePathForRole('viewer')).toBe('/manager/schedule');
   });
 
-  it('sends staff, and anyone with no known role, to the staff schedule', () => {
-    expect(homePathForRole('staff')).toBe('/app');
+  it('sends staff to availability first, and anyone with no known role to the staff schedule', () => {
+    expect(homePathForRole('staff')).toBe('/app/availability');
     expect(homePathForRole(null)).toBe('/app');
   });
 });

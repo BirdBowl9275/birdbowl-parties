@@ -51,6 +51,9 @@ export function homePathForRole(role: string | null): string {
       return '/manager/schedule';
     case 'sales':
       return '/sales/parties';
+    // Staff land on availability first; saving it takes them to their schedule.
+    case 'staff':
+      return '/app/availability';
     default:
       return '/app';
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
@@ -52,6 +53,9 @@ export default async function AppHomePage() {
       <div className="staff-head">
         <h1 id="app-title">Your schedule</h1>
         <p className="muted">Your party time slots for the next two weeks. Details appear on the morning of each party.</p>
+        <p>
+          <Link href="/app/availability">Set my availability</Link>
+        </p>
       </div>
       {error ? (
         <div className="banner banner-danger" role="alert">
