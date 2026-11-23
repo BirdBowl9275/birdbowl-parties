@@ -1,6 +1,7 @@
 -- RLS and trigger tests for 0001_init.sql. Local throwaway Postgres only.
 -- Run order: 00_auth_stub.sql, ../migrations/0001_init.sql, 0002_security_fixes.sql,
--- 0003_pending_name_and_sales_edits.sql, rls_tests.sql
+-- 0003_pending_name_and_sales_edits.sql, 0004_add_viewer_role.sql, 0005_viewer_read_access.sql,
+-- 0006_viewer_no_availability_writes.sql, rls_tests.sql
 -- psql -v ON_ERROR_STOP=1 makes any failed assertion stop the run with a non-zero exit.
 -- All users, emails and UUIDs below are fake.
 
@@ -68,10 +69,11 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000001', 'host1@example.com',   '{"full_name":"Test Host One"}'),
   ('00000000-0000-0000-0000-000000000002', 'host2@example.com',   '{"full_name":"Test Host Two"}'),
   ('00000000-0000-0000-0000-00000000000d', 'pending@example.com', '{}'),
-  ('00000000-0000-0000-0000-00000000000e', 'removed@example.com', '{"full_name":"Test Removed"}');
+  ('00000000-0000-0000-0000-00000000000e', 'removed@example.com', '{"full_name":"Test Removed"}'),
+  ('00000000-0000-0000-0000-00000000000f', 'viewer@example.com',  '{"full_name":"Test Viewer"}');
 
-select tests.ok((select count(*) from public.profiles where status = 'pending') = 7,
-                'auth trigger created 7 pending profiles');
+select tests.ok((select count(*) from public.profiles where status = 'pending') = 8,
+                'auth trigger created 8 pending profiles');
 
 update public.profiles set status = 'active', role = 'admin'   where id = '00000000-0000-0000-0000-00000000000a';
 update public.profiles set status = 'active', role = 'manager' where id = '00000000-0000-0000-0000-00000000000b';
@@ -80,6 +82,7 @@ update public.profiles set status = 'active', role = 'staff', tier = 1 where id 
 update public.profiles set status = 'active', role = 'staff', tier = 3 where id = '00000000-0000-0000-0000-000000000002';
 -- Starts active with a party; the admin removes this user during the tests.
 update public.profiles set status = 'active', role = 'staff', tier = 2 where id = '00000000-0000-0000-0000-00000000000e';
+update public.profiles set status = 'active', role = 'viewer' where id = '00000000-0000-0000-0000-00000000000f';
 
 insert into public.parties (party_date, start_time, end_time, kids_count, party_type, customer_name, assigned_host, created_by) values
   (tests.today() - 3, '14:00', '16:00', 10, 'bowling', 'Past Customer',       '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000c'),
@@ -170,6 +173,57 @@ select tests.ok(tests.rows($$update public.settings set value = '7' where key = 
 reset role;
 
 -- ---------------------------------------------------------------------------
+-- Viewer (0005): reads parties and host names; writes nothing
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000f', false);
+select tests.ok(public.is_viewer(), 'viewer: is_viewer() is true');
+select tests.ok(not public.can_manage_parties(), 'viewer: can_manage_parties() is false');
+select tests.ok((select count(*) from public.parties) = 6, 'viewer: sees all parties (read)');
+select tests.ok((select count(*) from public.profiles) = 1, 'viewer: sees only their own profile row');
+select tests.ok((select count(*) from public.schedule_hosts()) = 3, 'viewer: schedule_hosts() lists the 3 active hosts');
+select tests.ok(not exists (select 1 from public.schedule_hosts() where id = '00000000-0000-0000-0000-00000000000c'),
+                'viewer: schedule_hosts() excludes non-hosts');
+select tests.ok((select count(*) from public.availability) = 0, 'viewer: zero availability rows');
+select tests.ok((select count(*) from public.settings) > 0, 'viewer: can read settings');
+select tests.fails($$insert into public.parties (party_date, start_time, end_time, kids_count, party_type, customer_name, created_by)
+                    values (current_date + 5, '10:00', '12:00', 4, 'other', 'Viewer Insert', '00000000-0000-0000-0000-00000000000f')$$,
+                   'viewer: cannot insert a party');
+select tests.ok(tests.rows($$update public.parties set assigned_host = '00000000-0000-0000-0000-000000000001' where customer_name = 'Unassigned Customer'$$) = 0,
+                'viewer: cannot assign a host (0 rows)');
+select tests.ok(tests.rows($$update public.parties set assignment_locked = true where customer_name = 'Unassigned Customer'$$) = 0,
+                'viewer: cannot lock (0 rows)');
+select tests.ok(tests.rows($$update public.parties set status = 'cancelled' where customer_name = 'Tomorrow Customer'$$) = 0,
+                'viewer: cannot cancel a party (0 rows)');
+select tests.ok(tests.rows($$update public.parties set notes = 'Viewer edit' where customer_name = 'Tomorrow Customer'$$) = 0,
+                'viewer: cannot edit party details (0 rows)');
+select tests.ok(tests.rows($$update public.settings set value = '7' where key = 'fairness_window_days'$$) = 0,
+                'viewer: cannot change settings (0 rows)');
+select tests.fails($$update public.profiles set role = 'manager' where id = auth.uid()$$, 'viewer: cannot change own role');
+select tests.ok(tests.rows($$update public.profiles set full_name = 'Hacked' where id = '00000000-0000-0000-0000-000000000002'$$) = 0,
+                'viewer: cannot change another user''s profile');
+select tests.fails($$insert into public.availability (profile_id, week_start, day_of_week, start_time, end_time)
+                    values ('00000000-0000-0000-0000-000000000001', current_date + 28, 6, '10:00', '18:00')$$,
+                   'viewer: cannot write another user''s availability');
+select tests.fails(format(
+  $$insert into public.availability (profile_id, week_start, day_of_week, start_time, end_time)
+    values ('00000000-0000-0000-0000-00000000000f', %L, 6, '10:00', '18:00')$$, tests.this_monday() + 21),
+  'viewer (0006): cannot insert own availability');
+reset role;
+select tests.ok((select status from public.parties where customer_name = 'Tomorrow Customer') = 'active',
+                'viewer: Tomorrow Customer still active after viewer attempts');
+select tests.ok((select notes is distinct from 'Viewer edit' from public.parties where customer_name = 'Tomorrow Customer'),
+                'viewer: Tomorrow Customer notes unchanged');
+
+-- Non-viewers outside the schedule roles get nothing from schedule_hosts().
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000c', false);
+select tests.ok((select count(*) from public.schedule_hosts()) = 0, 'sales: schedule_hosts() returns zero rows');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select tests.ok((select count(*) from public.schedule_hosts()) = 0, 'host: schedule_hosts() returns zero rows');
+reset role;
+
+-- ---------------------------------------------------------------------------
 -- Manager
 -- ---------------------------------------------------------------------------
 set role authenticated;
@@ -194,6 +248,8 @@ select tests.ok(tests.rows($$update public.settings set value = '45' where key =
                 'admin: can change settings');
 select tests.ok(tests.rows($$update public.profiles set status = 'removed' where id = '00000000-0000-0000-0000-00000000000e'$$) = 1,
                 'admin: can remove a user');
+select tests.fails($$update public.profiles set tier = 1 where id = '00000000-0000-0000-0000-00000000000f'$$,
+                   'viewer (0006): admin cannot give a viewer a host tier');
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -212,6 +268,7 @@ reset role;
 select set_config('request.jwt.claim.sub', '', false);
 set role anon;
 select tests.fails($$select * from public.parties$$, 'anon: select from parties is denied');
+select tests.fails($$select * from public.schedule_hosts()$$, 'anon: schedule_hosts() is denied');
 reset role;
 
 -- ---------------------------------------------------------------------------

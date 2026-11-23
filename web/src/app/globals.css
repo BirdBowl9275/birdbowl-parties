@@ -2135,6 +2135,11 @@ table.data .r {
   }
 }
 
+/* Read-only viewers have no Add a party rail: the list takes the full width. */
+.sales-layout.sales-layout-readonly {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 @media (forced-colors: active) {
   .party-item.cancelled {
     border-style: dashed;

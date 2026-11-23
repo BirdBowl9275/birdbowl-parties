@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireManager } from '@/lib/manager-guard';
+import { requireScheduleView } from '@/lib/manager-guard';
 import { reassignParty, saveProposedAssignments } from '../actions';
 import { fairnessSummary, formatClock } from '@/lib/fairness';
 import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
@@ -52,16 +52,19 @@ export default async function ManagerSchedulePage({
   searchParams: Promise<{ week?: string; msg?: string; preview?: string }>;
 }) {
   const { week: weekParam, msg, preview: previewParam } = await searchParams;
-  const { supabase } = await requireManager();
+  // Managers and admins can edit; viewers (read-only) see the same week without any controls.
+  // Every write action still calls requireManager(), and RLS blocks viewer writes.
+  const { supabase, readOnly } = await requireScheduleView();
 
   const today = todayBusiness();
   const monday = validWeekStart(weekParam, today);
   const days = weekDays(monday);
 
   // Preview only: runs the engine on the week and shows the proposed hosts. Nothing is saved.
+  // Not offered to viewers: it reads staff availability, which viewers may not see.
   let previewInput: Awaited<ReturnType<typeof loadWeekInput>> | null = null;
   let preview: ReturnType<typeof assignWeek> | null = null;
-  if (previewParam === '1') {
+  if (previewParam === '1' && !readOnly) {
     previewInput = await loadWeekInput(supabase, monday, today, nowClockBusiness());
     preview = assignWeek(
       previewInput.parties,
@@ -81,12 +84,15 @@ export default async function ManagerSchedulePage({
       .eq('status', 'active')
       .order('party_date')
       .order('start_time'),
-    supabase
-      .from('profiles')
-      .select('id, full_name, tier, daily_cap')
-      .eq('status', 'active')
-      .not('tier', 'is', null)
-      .order('full_name'),
+    // Viewers cannot read the profiles table; schedule_hosts() returns only these four columns.
+    readOnly
+      ? supabase.rpc('schedule_hosts')
+      : supabase
+          .from('profiles')
+          .select('id, full_name, tier, daily_cap')
+          .eq('status', 'active')
+          .not('tier', 'is', null)
+          .order('full_name'),
     supabase.from('settings').select('value').eq('key', 'fairness_window_days').maybeSingle(),
   ]);
 
@@ -147,6 +153,47 @@ export default async function ManagerSchedulePage({
     </>
   );
 
+  // Time, customer, kids and type: the same in the editable and the read-only row.
+  const infoCells = (p: PartyRow) => (
+    <>
+      <div role="cell" className="pcell pcell-time">
+        <span className="plabel" aria-hidden="true">Time</span>
+        {formatClock(p.start_time)}–{formatClock(p.end_time)}
+      </div>
+      <div role="cell" className="pcell pcell-customer">
+        <span className="plabel" aria-hidden="true">Customer</span>
+        <strong>{p.customer_name}</strong>
+        <span className="pills">
+          {p.assigned_host ? (
+            <span className="pill pill-success">
+              <Check />
+              Host assigned
+            </span>
+          ) : (
+            <span className="pill pill-warning">
+              <CircleAlert />
+              Not assigned
+            </span>
+          )}
+          {p.assignment_locked ? (
+            <span className="pill pill-neutral">
+              <Lock />
+              Locked
+            </span>
+          ) : null}
+        </span>
+      </div>
+      <div role="cell" className="pcell pcell-kids">
+        <span className="plabel" aria-hidden="true">Kids</span>
+        {p.kids_count}
+      </div>
+      <div role="cell" className="pcell pcell-type">
+        <span className="plabel" aria-hidden="true">Type</span>
+        <PartyType type={p.party_type} />
+      </div>
+    </>
+  );
+
   return (
     <section className="sched" aria-labelledby="schedule-title">
       <div className="sched-head">
@@ -163,9 +210,13 @@ export default async function ManagerSchedulePage({
               <ChevronRight />
             </Link>
           </nav>
-          <Link className="btn" href={`/manager/schedule?week=${monday}&preview=1`}>
-            Preview the assignment for this week
-          </Link>
+          {readOnly ? (
+            <span className="pill pill-neutral">View only</span>
+          ) : (
+            <Link className="btn" href={`/manager/schedule?week=${monday}&preview=1`}>
+              Preview the assignment for this week
+            </Link>
+          )}
         </div>
       </div>
       {msg ? (
@@ -182,10 +233,10 @@ export default async function ManagerSchedulePage({
       ) : null}
 
       {previewInput && preview ? (
-        <section className="panel panel-info" aria-labelledby="preview-title">
+        <section className="panel" aria-labelledby="preview-title">
           <h2 id="preview-title">Assignment preview</h2>
           <p className="muted">
-            <span className="pill pill-info">
+            <span className="pill pill-neutral">
               <Info />
               Preview, not saved
             </span>{' '}
@@ -261,49 +312,27 @@ export default async function ManagerSchedulePage({
                 {dayParties.length > 0 ? (
                 <div role="table" aria-labelledby={`day-${day}`} className="day-rows">
                 <div role="row" className="vh">
-                  {['Time', 'Customer', 'Kids', 'Type', 'Host', 'Lock', 'Save'].map((c) => (
+                  {['Time', 'Customer', 'Kids', 'Type', 'Host', 'Lock', ...(readOnly ? [] : ['Save'])].map((c) => (
                     <span key={c} role="columnheader">{c}</span>
                   ))}
                 </div>
-                {dayParties.map((p) => (
+                {dayParties.map((p) => readOnly ? (
+                  <div key={p.id} role="row" className="prow" aria-label={p.customer_name}>
+                    {infoCells(p)}
+                    <div role="cell" className="pcell pcell-host">
+                      <span className="plabel" aria-hidden="true">Host</span>
+                      {p.assigned_host ? hostName.get(p.assigned_host) ?? 'Assigned host' : 'Not assigned'}
+                    </div>
+                    <div role="cell" className="pcell pcell-lock">
+                      <span className="plabel" aria-hidden="true">Lock</span>
+                      {p.assignment_locked ? 'Locked' : <span className="muted">Not locked</span>}
+                    </div>
+                  </div>
+                ) : (
                   <form key={p.id} action={reassignParty} role="row" className="prow" aria-label={`Assign ${p.customer_name}`}>
                     <input type="hidden" name="party_id" value={p.id} />
                     <input type="hidden" name="week" value={monday} />
-                    <div role="cell" className="pcell pcell-time">
-                      <span className="plabel" aria-hidden="true">Time</span>
-                      {formatClock(p.start_time)}–{formatClock(p.end_time)}
-                    </div>
-                    <div role="cell" className="pcell pcell-customer">
-                      <span className="plabel" aria-hidden="true">Customer</span>
-                      <strong>{p.customer_name}</strong>
-                      <span className="pills">
-                        {p.assigned_host ? (
-                          <span className="pill pill-success">
-                            <Check />
-                            Host assigned
-                          </span>
-                        ) : (
-                          <span className="pill pill-warning">
-                            <CircleAlert />
-                            Not assigned
-                          </span>
-                        )}
-                        {p.assignment_locked ? (
-                          <span className="pill pill-neutral">
-                            <Lock />
-                            Locked
-                          </span>
-                        ) : null}
-                      </span>
-                    </div>
-                    <div role="cell" className="pcell pcell-kids">
-                      <span className="plabel" aria-hidden="true">Kids</span>
-                      {p.kids_count}
-                    </div>
-                    <div role="cell" className="pcell pcell-type">
-                      <span className="plabel" aria-hidden="true">Type</span>
-                      <PartyType type={p.party_type} />
-                    </div>
+                    {infoCells(p)}
                     <label role="cell" className="pcell pcell-host">
                       <span className="plabel">Host</span>
                       <select name="host_id" defaultValue={p.assigned_host ?? ''}>

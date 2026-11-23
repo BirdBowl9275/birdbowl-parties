@@ -47,6 +47,7 @@ export function homePathForRole(role: string | null): string {
     case 'admin':
       return '/admin/users';
     case 'manager':
+    case 'viewer':
       return '/manager/schedule';
     case 'sales':
       return '/sales/parties';

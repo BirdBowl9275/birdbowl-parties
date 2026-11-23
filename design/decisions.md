@@ -41,3 +41,7 @@ Jeff approved the pilot's visual direction (manager schedule, header, tokens, li
 4. **Cancelled test parties** ("Design QA test", "Design QA test 2" in the test project): keep them. They are cancelled, harmless, and useful for checking the cancelled-row style; removing them would need a hard delete the app doesn't offer.
 - **Party type tags (phase 6, critic M1):** the bowling-ball icon is hand-drawn because Lucide has none. Square tags (radius-xs) = party type; round pills = status.
 - **Sign-in card position and footer (phase 5):** on laptops the card sits 12vh from the top (not spec 4.1's 30%), so the code step and errors stay above the fold on short screens; the spec's "Bird Bowl" footer line is not built, because the card's brand row already carries the logo and name. The theme toggle in the card is icon-only at every width (labels kept for assistive technology).
+
+## Access decision (2026-11-23, Jeff)
+- **Dion and Susie: read-only.** They may view the manager schedule and the parties list but not add, edit, cancel, assign, lock or save. Needs a new read-only access level (database role, RLS, route checks, hidden controls). Not built yet; needs Jeff's approval of the plan, then test project first, then production.
+- **Sophia: same access as Mady (sales) and Stephanie (manager).** The `manager` role already includes everything `sales` can do (`can_manage_parties()` covers sales, manager and admin), so Sophia needs the `manager` role and no code change. If she isn't already manager, Jeff sets it in Admin, Users.

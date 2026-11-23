@@ -6,6 +6,7 @@ describe('homePathForRole', () => {
     expect(homePathForRole('admin')).toBe('/admin/users');
     expect(homePathForRole('manager')).toBe('/manager/schedule');
     expect(homePathForRole('sales')).toBe('/sales/parties');
+    expect(homePathForRole('viewer')).toBe('/manager/schedule');
   });
 
   it('sends staff, and anyone with no known role, to the staff schedule', () => {

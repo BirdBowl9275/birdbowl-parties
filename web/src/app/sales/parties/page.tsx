@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireSalesAccess } from '@/lib/sales-guard';
+import { requirePartiesView } from '@/lib/sales-guard';
 import { createParty, cancelParty, updateParty } from '../actions';
 import { addDays, PARTY_TYPES, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { formatClock } from '@/lib/fairness';
@@ -49,7 +49,9 @@ export default async function SalesPartiesPage({
   searchParams: Promise<{ week?: string; msg?: string }>;
 }) {
   const { week: weekParam, msg } = await searchParams;
-  const { supabase } = await requireSalesAccess();
+  // Viewers see the list without any controls. Every write action still calls
+  // requireSalesAccess(), and RLS blocks viewer writes.
+  const { supabase, readOnly } = await requirePartiesView();
 
   const monday = validWeekStart(weekParam, todayBusiness());
   const days = weekDays(monday);
@@ -81,9 +83,13 @@ export default async function SalesPartiesPage({
               <ChevronRight />
             </Link>
           </nav>
-          <a className="btn add-jump" href="#add-party">
-            Add a party
-          </a>
+          {readOnly ? (
+            <span className="pill pill-neutral">View only</span>
+          ) : (
+            <a className="btn add-jump" href="#add-party">
+              Add a party
+            </a>
+          )}
         </div>
       </div>
       {msg ? (
@@ -99,7 +105,7 @@ export default async function SalesPartiesPage({
         </div>
       ) : null}
 
-      <div className="sched-layout sales-layout">
+      <div className={readOnly ? 'sched-layout sales-layout sales-layout-readonly' : 'sched-layout sales-layout'}>
         <div className="sched-main">
           {days.map((day) => {
             const dayRows = rows.filter((r) => r.party_date === day);
@@ -150,12 +156,12 @@ export default async function SalesPartiesPage({
                             <p className="party-kids num">{r.kids_count} kids</p>
                             <p className="party-type"><PartyType type={r.party_type} /></p>
                             <div className="party-cancel">
-                              {cancelled ? null : (
+                              {cancelled || readOnly ? null : (
                                 <CancelParty action={cancelParty} id={r.id} week={monday} customer={r.customer_name} />
                               )}
                             </div>
                           </div>
-                          {cancelled ? null : (
+                          {cancelled || readOnly ? null : (
                             <details className="edit-fold">
                               <summary>
                                 <ChevronRight />
@@ -176,10 +182,12 @@ export default async function SalesPartiesPage({
           })}
         </div>
 
-        <aside id="add-party" className="sched-rail panel add-panel" aria-labelledby="add-title" tabIndex={-1}>
-          <h2 id="add-title">Add a party</h2>
-          <PartyForm action={createParty} week={monday} labelledBy="add-title" />
-        </aside>
+        {readOnly ? null : (
+          <aside id="add-party" className="sched-rail panel add-panel" aria-labelledby="add-title" tabIndex={-1}>
+            <h2 id="add-title">Add a party</h2>
+            <PartyForm action={createParty} week={monday} labelledBy="add-title" />
+          </aside>
+        )}
       </div>
     </section>
   );

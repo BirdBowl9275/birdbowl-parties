@@ -1,7 +1,7 @@
 // Validation for admin changes. Pure functions, so they can be unit tested.
 // The database still enforces who may make each change (RLS and the guard trigger).
 
-export const ROLES = ['staff', 'sales', 'manager', 'admin'] as const;
+export const ROLES = ['staff', 'sales', 'viewer', 'manager', 'admin'] as const;
 export const STATUSES = ['pending', 'active', 'removed'] as const;
 export type Role = (typeof ROLES)[number];
 export type Status = (typeof STATUSES)[number];
@@ -37,6 +37,10 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
       return { ok: false, error: 'Tier must be 1, 2, 3 or not a host.' };
     }
     tier = parsed;
+  }
+  // Viewers are read-only and never hosts; a tier would make them assignable.
+  if (input.role === 'viewer' && tier !== null) {
+    return { ok: false, error: 'A viewer cannot be a host. Set the tier to not a host.' };
   }
 
   const cap = Number(input.dailyCap);

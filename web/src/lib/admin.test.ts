@@ -9,6 +9,15 @@ describe('validateProfileChange', () => {
     expect(r).toEqual({ ok: true, value: { role: 'staff', status: 'active', tier: 1, dailyCap: 3 } });
   });
 
+  it('accepts the read-only viewer role', () => {
+    const r = validateProfileChange({ ...base, role: 'viewer', tier: '' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('does not let a viewer have a host tier', () => {
+    expect(validateProfileChange({ ...base, role: 'viewer', tier: '1' }).ok).toBe(false);
+  });
+
   it('treats an empty tier as not a host', () => {
     const r = validateProfileChange({ ...base, tier: '' });
     expect(r.ok && r.value.tier).toBeNull();
