@@ -4,6 +4,7 @@ import { createParty, cancelParty, updateParty } from '../actions';
 import { addDays, PARTY_TYPES, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { formatClock } from '@/lib/fairness';
 import { Ban, Check, ChevronLeft, ChevronRight, CircleAlert, Info } from '../../components/icons';
+import { PartyType, PARTY_TYPE_LABEL } from '../../components/party-type';
 import { CancelParty } from './cancel-party';
 
 export const dynamic = 'force-dynamic';
@@ -147,7 +148,7 @@ export default async function SalesPartiesPage({
                               </span>
                             </div>
                             <p className="party-kids num">{r.kids_count} kids</p>
-                            <p className="party-type">{r.party_type}</p>
+                            <p className="party-type"><PartyType type={r.party_type} /></p>
                             <div className="party-cancel">
                               {cancelled ? null : (
                                 <CancelParty action={cancelParty} id={r.id} week={monday} customer={r.customer_name} />
@@ -220,7 +221,7 @@ function PartyForm({
           Type
           <select name="party_type" defaultValue={party?.party_type ?? 'bowling'}>
             {PARTY_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>{PARTY_TYPE_LABEL[t] ?? t}</option>
             ))}
           </select>
         </label>

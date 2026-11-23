@@ -34,6 +34,14 @@
 
   --focus: #2563eb;
 
+  /* Party types: bowling = Bird Bowl red, arcade = Game Zone violet. Blue stays for focus only. */
+  --type-bowling-fg: #b00023;
+  --type-bowling-bg: #fdecef;
+  --type-bowling-border: #e0546c;
+  --type-arcade-fg: #6a1fd0;
+  --type-arcade-bg: #f4edff;
+  --type-arcade-border: #9b6bf0;
+
   /* Semantic */
   --success-fg: #137538;
   --success-bg: #edf7f0;
@@ -131,6 +139,12 @@
     --brand-subtle-border: #6e1a2a;
     --brand-subtle-fg: #ff7a8b;
     --focus: #60a5fa;
+    --type-bowling-fg: #ff8a9a;
+    --type-bowling-bg: #3a0f17;
+    --type-bowling-border: #c4344d;
+    --type-arcade-fg: #d9b8ff;
+    --type-arcade-bg: #2a1450;
+    --type-arcade-border: #8e5ae0;
     --success-fg: #4ade80;
     --success-bg: #0f2a1a;
     --success-border: #1f5133;
@@ -173,6 +187,12 @@
   --brand-subtle-border: #6e1a2a;
   --brand-subtle-fg: #ff7a8b;
   --focus: #60a5fa;
+  --type-bowling-fg: #ff8a9a;
+  --type-bowling-bg: #3a0f17;
+  --type-bowling-border: #c4344d;
+  --type-arcade-fg: #d9b8ff;
+  --type-arcade-bg: #2a1450;
+  --type-arcade-border: #8e5ae0;
   --success-fg: #4ade80;
   --success-bg: #0f2a1a;
   --success-border: #1f5133;
@@ -968,6 +988,20 @@ table.fairness td {
   color: var(--danger-fg);
   background: var(--danger-bg);
   border-color: var(--danger-border);
+}
+
+.pill-bowling {
+  border-radius: var(--radius-xs);
+  color: var(--type-bowling-fg);
+  background: var(--type-bowling-bg);
+  border-color: var(--type-bowling-border);
+}
+
+.pill-arcade {
+  border-radius: var(--radius-xs);
+  color: var(--type-arcade-fg);
+  background: var(--type-arcade-bg);
+  border-color: var(--type-arcade-border);
 }
 
 .pill-neutral {
@@ -1850,6 +1884,13 @@ table.data .r {
 }
 
 .party-item.cancelled .pill-neutral {
+  background: var(--surface);
+  border-color: var(--border-input);
+}
+
+.party-item.cancelled .pill-bowling,
+.party-item.cancelled .pill-arcade {
+  color: var(--text-muted);
   background: var(--surface);
   border-color: var(--border-input);
 }

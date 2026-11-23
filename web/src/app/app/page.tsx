@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
 import { addDays, todayBusiness } from '@/lib/parties';
+import { PartyType } from '../components/party-type';
 import { CircleAlert, Lock, LockOpen } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -85,7 +86,7 @@ export default async function AppHomePage() {
                       </span>
                     </p>
                     <p className="staff-meta">
-                      <span className="num">{r.kids_count} kids</span> · <span>{r.party_type}</span>
+                      <span className="num">{r.kids_count} kids</span> · <PartyType type={r.party_type} />
                     </p>
                     {r.notes ? <p className="staff-notes">{r.notes}</p> : null}
                   </div>

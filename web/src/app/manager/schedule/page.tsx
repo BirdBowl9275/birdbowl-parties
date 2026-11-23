@@ -5,6 +5,7 @@ import { fairnessSummary, formatClock } from '@/lib/fairness';
 import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
+import { PartyType } from '../../components/party-type';
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Info, Lock, LockOpen, TriangleAlert } from '../../components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -207,7 +208,7 @@ export default async function ManagerSchedulePage({
                     <td>{dayHeading(p.date)}</td>
                     <td>{formatClock(p.start)}–{formatClock(p.end)}</td>
                     <td className="r">{p.kids}</td>
-                    <td>{p.type}</td>
+                    <td><PartyType type={p.type} /></td>
                     <td>{hostPill(host, Boolean(p.fixed))}</td>
                   </tr>
                 ))}
@@ -218,7 +219,7 @@ export default async function ManagerSchedulePage({
             {previewRows.map(({ p, host }) => (
               <li key={p.id}>
                 <p className="card-title">{dayHeading(p.date)}, {formatClock(p.start)}–{formatClock(p.end)}</p>
-                <p className="muted num">{p.kids} kids · {p.type}</p>
+                <p className="muted num">{p.kids} kids · <PartyType type={p.type} /></p>
                 <p>
                   <span className="muted">Proposed host: </span>
                   {hostPill(host, Boolean(p.fixed))}
@@ -301,7 +302,7 @@ export default async function ManagerSchedulePage({
                     </div>
                     <div role="cell" className="pcell pcell-type">
                       <span className="plabel" aria-hidden="true">Type</span>
-                      {p.party_type}
+                      <PartyType type={p.party_type} />
                     </div>
                     <label role="cell" className="pcell pcell-host">
                       <span className="plabel">Host</span>
