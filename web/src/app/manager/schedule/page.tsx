@@ -5,6 +5,7 @@ import { fairnessSummary, formatClock } from '@/lib/fairness';
 import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
+import { Check, ChevronLeft, ChevronRight, CircleAlert, Info, Lock, LockOpen, TriangleAlert } from '../../components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,16 @@ type PartyRow = {
   assigned_host: string | null;
   assignment_locked: boolean;
 };
+
+// "Saturday, Nov 28" from a YYYY-MM-DD key. UTC so the day never shifts with the server's zone.
+function dayHeading(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 type HostRow = { id: string; full_name: string; tier: number; daily_cap: number };
 
@@ -91,55 +102,118 @@ export default async function ManagerSchedulePage({
     windowDays,
   );
 
+  const previewRows =
+    previewInput && preview
+      ? previewInput.parties.map((p) => {
+          const a = preview!.assignments.find((x) => x.partyId === p.id);
+          const host = a ? previewInput!.hosts.find((h) => h.id === a.hostId) : undefined;
+          return { p, host };
+        })
+      : [];
+
+  const hostPill = (host: { fullName: string } | undefined, fixed: boolean) => (
+    <>
+      {host ? (
+        host.fullName
+      ) : (
+        <span className="pill pill-danger">
+          <TriangleAlert />
+          No eligible host
+        </span>
+      )}
+      {fixed ? (
+        <>
+          {' '}
+          <span className="pill pill-neutral">
+            <Lock />
+            Fixed
+          </span>
+        </>
+      ) : null}
+    </>
+  );
+
   return (
-    <section className="card wide" aria-labelledby="schedule-title">
-      <nav className="week-nav" aria-label="Week">
-        <Link href={`/manager/schedule?week=${addDays(monday, -7)}`}>Previous week</Link>
-        <span>Week of {monday}</span>
-        <Link href={`/manager/schedule?week=${addDays(monday, 7)}`}>Next week</Link>
-      </nav>
-      <h1 id="schedule-title">Weekly schedule</h1>
-      <p>
-        <Link href={`/manager/schedule?week=${monday}&preview=1`}>Preview the assignment for this week</Link>
-      </p>
-      {msg ? <p role="status">{msg}</p> : null}
+    <section className="sched" aria-labelledby="schedule-title">
+      <div className="sched-head">
+        <h1 id="schedule-title">Weekly schedule</h1>
+        <div className="sched-actions">
+          <nav className="weeknav" aria-label="Week">
+            <Link href={`/manager/schedule?week=${addDays(monday, -7)}`}>
+              <ChevronLeft />
+              <span className="vh-md">Previous week</span>
+            </Link>
+            <span className="week-label">Week of {monday}</span>
+            <Link href={`/manager/schedule?week=${addDays(monday, 7)}`}>
+              <span className="vh-md">Next week</span>
+              <ChevronRight />
+            </Link>
+          </nav>
+          <Link className="btn" href={`/manager/schedule?week=${monday}&preview=1`}>
+            Preview the assignment for this week
+          </Link>
+        </div>
+      </div>
+      {msg ? (
+        <div className="banner banner-info" role="status">
+          <Info />
+          <span>{msg}</span>
+        </div>
+      ) : null}
+      {partiesRes.error ? (
+        <div className="banner banner-danger" role="alert">
+          <CircleAlert />
+          <span>Could not load parties.</span>
+        </div>
+      ) : null}
 
       {previewInput && preview ? (
-        <>
-          <h2>Assignment preview</h2>
-          <p className="muted">Preview only. Nothing is saved. Locked and revealed parties keep their host.</p>
-          <div className="table-wrap">
-            <table className="fairness">
+        <section className="panel panel-info" aria-labelledby="preview-title">
+          <h2 id="preview-title">Assignment preview</h2>
+          <p className="muted">
+            <span className="pill pill-info">
+              <Info />
+              Preview, not saved
+            </span>{' '}
+            Preview only. Nothing is saved. Locked and revealed parties keep their host.
+          </p>
+          <div className="data-table-wrap only-table">
+            <table className="data">
               <thead>
                 <tr>
                   <th scope="col">Date</th>
                   <th scope="col">Time</th>
-                  <th scope="col">Kids</th>
+                  <th scope="col" className="r">Kids</th>
                   <th scope="col">Type</th>
                   <th scope="col">Proposed host</th>
                 </tr>
               </thead>
               <tbody>
-                {previewInput.parties.map((p) => {
-                  const a = preview!.assignments.find((x) => x.partyId === p.id);
-                  const host = a ? previewInput!.hosts.find((h) => h.id === a.hostId) : undefined;
-                  return (
-                    <tr key={p.id}>
-                      <td>{p.date}</td>
-                      <td>{formatClock(p.start)} to {formatClock(p.end)}</td>
-                      <td>{p.kids}</td>
-                      <td>{p.type}</td>
-                      <td>
-                        {host ? host.fullName : 'No eligible host'}
-                        {p.fixed ? <span className="muted"> (fixed)</span> : null}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {previewRows.map(({ p, host }) => (
+                  <tr key={p.id}>
+                    <td>{p.date}</td>
+                    <td>{formatClock(p.start)} to {formatClock(p.end)}</td>
+                    <td className="r">{p.kids}</td>
+                    <td>{p.type}</td>
+                    <td>{hostPill(host, Boolean(p.fixed))}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-          <form action={saveProposedAssignments} className="user-row">
+          <ul className="cards only-cards" aria-label="Assignment preview">
+            {previewRows.map(({ p, host }) => (
+              <li key={p.id}>
+                <p className="card-title">{p.date}, {formatClock(p.start)} to {formatClock(p.end)}</p>
+                <p className="muted num">{p.kids} kids · {p.type}</p>
+                <p>
+                  <span className="muted">Proposed host: </span>
+                  {hostPill(host, Boolean(p.fixed))}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <form action={saveProposedAssignments}>
             <input type="hidden" name="week" value={monday} />
             <label className="check">
               <input type="checkbox" name="confirm" /> I reviewed this preview. Save these assignments for the
@@ -147,72 +221,151 @@ export default async function ManagerSchedulePage({
             </label>
             <button type="submit">Save these assignments</button>
           </form>
-        </>
+        </section>
       ) : null}
-      {partiesRes.error ? <p className="notice" role="alert">Could not load parties.</p> : null}
 
-      <h2>Fairness, last {windowDays} days</h2>
-      <div className="table-wrap">
-        <table className="fairness">
-          <thead>
-            <tr>
-              <th scope="col">Host</th>
-              <th scope="col">Parties</th>
-              <th scope="col">Total kids</th>
-              <th scope="col">Average kids</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.map((s) => (
-              <tr key={s.hostId}>
-                <td>{hostName.get(s.hostId)}</td>
-                <td>{s.parties}</td>
-                <td>{s.totalKids}</td>
-                <td>{s.averageKids === null ? '–' : s.averageKids.toFixed(1)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {days.map((day) => {
-        const dayParties = parties.filter((p) => p.party_date === day);
-        return (
-          <div key={day} className="day">
-            <h2>{day}</h2>
-            {dayParties.length === 0 ? <p className="muted">No parties.</p> : null}
-            {dayParties.map((p) => (
-              <form key={p.id} action={reassignParty} className="user-row" aria-label={`Assign ${p.customer_name}`}>
-                <input type="hidden" name="party_id" value={p.id} />
-                <input type="hidden" name="week" value={monday} />
-                <p className="user-name">
-                  <strong>{p.customer_name}</strong>{' '}
-                  <span className="muted">
-                    {formatClock(p.start_time)}–{formatClock(p.end_time)} · {p.kids_count} kids · {p.party_type}
-                  </span>
-                </p>
-                <div className="fields">
-                  <label>
-                    Host
-                    <select name="host_id" defaultValue={p.assigned_host ?? ''}>
-                      <option value="">Not assigned</option>
-                      {hosts.map((h) => (
-                        <option key={h.id} value={h.id}>
-                          {h.full_name || 'Unnamed host'} (tier {h.tier})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="check">
-                    <input type="checkbox" name="locked" defaultChecked={p.assignment_locked} /> Lock by hand
-                  </label>
-                </div>
-                <button type="submit">Save assignment</button>
-              </form>
-            ))}
+      <div className="sched-layout">
+        <div className="sched-main">
+          <div className="phead" aria-hidden="true">
+            <span>Time</span>
+            <span>Customer</span>
+            <span className="r">Kids</span>
+            <span>Type</span>
+            <span>Host</span>
+            <span>Lock</span>
+            <span />
           </div>
-        );
-      })}
+          {days.map((day) => {
+            const dayParties = parties.filter((p) => p.party_date === day);
+            return (
+              <div key={day} className="day-group">
+                <h2>
+                  {dayHeading(day)}
+                  {dayParties.length > 0 ? <span className="day-count">{dayParties.length} {dayParties.length === 1 ? 'party' : 'parties'}</span> : null}
+                </h2>
+                {dayParties.length === 0 ? <p className="empty">No parties.</p> : null}
+                {dayParties.map((p) => (
+                  <form key={p.id} action={reassignParty} className="prow" aria-label={`Assign ${p.customer_name}`}>
+                    <input type="hidden" name="party_id" value={p.id} />
+                    <input type="hidden" name="week" value={monday} />
+                    <div className="pcell pcell-time">
+                      <span className="plabel">Time</span>
+                      {formatClock(p.start_time)}–{formatClock(p.end_time)}
+                    </div>
+                    <div className="pcell pcell-customer">
+                      <span className="plabel">Customer</span>
+                      <strong>{p.customer_name}</strong>
+                      <span className="pills">
+                        {p.assigned_host ? (
+                          <span className="pill pill-success">
+                            <Check />
+                            Host assigned
+                          </span>
+                        ) : (
+                          <span className="pill pill-warning">
+                            <CircleAlert />
+                            Not assigned
+                          </span>
+                        )}
+                        {p.assignment_locked ? (
+                          <span className="pill pill-info">
+                            <Lock />
+                            Locked
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                    <div className="pcell pcell-kids">
+                      <span className="plabel">Kids</span>
+                      {p.kids_count}
+                    </div>
+                    <div className="pcell pcell-type">
+                      <span className="plabel">Type</span>
+                      {p.party_type}
+                    </div>
+                    <label className="pcell pcell-host">
+                      <span className="plabel">Host</span>
+                      <select name="host_id" defaultValue={p.assigned_host ?? ''}>
+                        <option value="">Not assigned</option>
+                        {hosts.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.full_name || 'Unnamed host'} (tier {h.tier})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="pcell pcell-lock">
+                      <label className="lockchip">
+                        <input type="checkbox" name="locked" defaultChecked={p.assignment_locked} />
+                        <span className="vh">Lock by hand</span>
+                        <span className="ic-off" aria-hidden="true"><LockOpen /></span>
+                        <span className="ic-on" aria-hidden="true"><Lock /></span>
+                        <span className="txt-off" aria-hidden="true">Lock</span>
+                        <span className="txt-on" aria-hidden="true">Locked</span>
+                      </label>
+                    </div>
+                    <div className="pcell pcell-save">
+                      <button type="submit" className="secondary btn-secondary">Save assignment</button>
+                    </div>
+                  </form>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        <aside className="sched-rail" aria-labelledby="fairness-title">
+          <h2 id="fairness-title">Fairness, last {windowDays} days</h2>
+          {summary.length === 0 ? <p className="empty">No hosts yet.</p> : null}
+          {summary.length > 0 ? (
+            <>
+              <div className="data-table-wrap only-table">
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th scope="col">Host</th>
+                      <th scope="col" className="r">Parties</th>
+                      <th scope="col" className="r">Total kids</th>
+                      <th scope="col" className="r">Average kids</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((s) => (
+                      <tr key={s.hostId}>
+                        <th scope="row">{hostName.get(s.hostId)}</th>
+                        <td className="r">{s.parties}</td>
+                        <td className="r">{s.totalKids}</td>
+                        <td className="r">{s.averageKids === null ? '–' : s.averageKids.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <ul className="cards only-cards" aria-label="Fairness by host">
+                {summary.map((s) => (
+                  <li key={s.hostId}>
+                    <p className="card-title">{hostName.get(s.hostId)}</p>
+                    <dl className="stats">
+                      <div>
+                        <dt>Parties</dt>
+                        <dd>{s.parties}</dd>
+                      </div>
+                      <div>
+                        <dt>Total kids</dt>
+                        <dd>{s.totalKids}</dd>
+                      </div>
+                      <div>
+                        <dt>Average kids</dt>
+                        <dd>{s.averageKids === null ? '–' : s.averageKids.toFixed(1)}</dd>
+                      </div>
+                    </dl>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </aside>
+      </div>
     </section>
   );
 }

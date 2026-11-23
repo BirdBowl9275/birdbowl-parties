@@ -11,6 +11,8 @@ Jeff approved the visual direction in design/preview/index.html and design/desig
 7. **Icons:** copy the needed Lucide SVGs into the app. No new npm dependency.
 8. **Logo:** use web/public/brand/bird-bowl-logo.png (Jeff's PNG, 1868x1865). An SVG would be better later. Brand red #D7002A still to be confirmed with a colour picker.
 
+9. **Accent colour (2026-11-23):** brand red #D7002A is the accent, with #FF4D64 for red text on dark surfaces. The old blue accent (#6b9cff) is retired; blue remains only as the focus ring. Jeff left the choice to the design lead ("however you see it visually best"), which supersedes the earlier "keep blue accent" note in the deploy chat.
+
 ## Rollout
 
 - Pilot first: design tokens, shared header, and the manager schedule. Jeff approves the pilot before other screens.
