@@ -20,12 +20,16 @@ export function validateInvite(input: { email: string; fullName: string }): Invi
   return { ok: true, value: { email, fullName } };
 }
 
+// Invites per inviter in any 24 hours (security review WEB-INV-02). Raised from 10 to 50 on
+// Jeff's request, 2026-11-23, to finish onboarding. Set back to 10 when onboarding is done.
+export const INVITE_DAILY_LIMIT = 50;
+
 // Shown on /invite?msg=<code>. Only these fixed texts can appear, and no name or email ever
 // goes into the URL (security review WEB-INV-04).
 export const INVITE_MESSAGES: Record<string, string> = {
   added: 'Added. They can sign in at parties.birdbowl.com with their email. An admin approves them before they see anything.',
   exists: 'That email already has an account.',
-  limit: 'You have reached today’s limit of 10 invites. Try again tomorrow or ask Jeff.',
+  limit: `You have reached today’s limit of ${INVITE_DAILY_LIMIT} invites. Try again tomorrow or ask Jeff.`,
   setup: 'Inviting is not set up yet. Ask Jeff to finish the setup.',
   error: 'Could not add that person. Try again.',
   'email-missing': 'Enter their email address.',
@@ -33,6 +37,3 @@ export const INVITE_MESSAGES: Record<string, string> = {
   'name-missing': 'Enter their name.',
   'name-long': 'Keep the name under 100 characters.',
 };
-
-// Invites per inviter in any 24 hours (security review WEB-INV-02).
-export const INVITE_DAILY_LIMIT = 10;
