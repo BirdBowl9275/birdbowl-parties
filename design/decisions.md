@@ -22,3 +22,8 @@ Jeff approved the visual direction in design/preview/index.html and design/desig
 ## Pilot approval (2026-11-23)
 
 Jeff approved the pilot's visual direction (manager schedule, header, tokens, light/dark) for rollout. Order: sales parties, then staff, then admin (users and settings), then login and pending. One screen per phase, with tests, build and before/after screenshots each time.
+
+## Design lead decisions during rollout (2026-11-23)
+
+- **Staff slot pills (phase 3):** "Details hidden" (neutral, lock icon) before the reveal and "Details shown" (success green, lock-open icon) after it. This replaces spec 3.9's "Details on the morning" / "Revealed" (info blue), because blue is reserved for the focus ring (decision 9) and the shorter labels fit a phone card. design-system.md 3.9, 4.2 and 7 still show the old wording; this entry supersedes them.
+- **Staff Sign out:** kept both the header Sign out and the in-page Sign out button on /app (spec 3.1, 4.2, 4.7 #10), so staff on phones have a labelled button.

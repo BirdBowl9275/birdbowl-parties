@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
 import { addDays, todayBusiness } from '@/lib/parties';
+import { CircleAlert, Lock, LockOpen } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,38 +34,88 @@ export default async function AppHomePage() {
   });
   const rows = (data ?? []) as ScheduleRow[];
 
-  return (
-    <section className="card wide" aria-labelledby="app-title">
-      <h1 id="app-title">Your schedule</h1>
-      <p>Your party time slots for the next two weeks. Details appear on the morning of each party.</p>
-      {error ? <p className="notice" role="alert">Could not load your schedule.</p> : null}
-      {!error && rows.length === 0 ? <p>No upcoming parties.</p> : null}
+  // Group by day, keeping the order the database returned. Display only.
+  const days: { date: string; rows: ScheduleRow[] }[] = [];
+  for (const r of rows) {
+    const last = days[days.length - 1];
+    if (last && last.date === r.party_date) last.rows.push(r);
+    else days.push({ date: r.party_date, rows: [r] });
+  }
+  const tomorrow = addDays(today, 1);
 
-      {rows.map((r) => (
-        <div key={r.party_id} className="user-row">
-          <p className="user-name">
-            <strong>
-              Party, {weekdayLabel(r.party_date)} {formatClock(r.start_time)} to {formatClock(r.end_time)}
-            </strong>
-          </p>
-          {r.revealed ? (
-            <p className="muted">
-              {r.customer_name} · {r.kids_count} kids · {r.party_type}
-              {r.notes ? ` · ${r.notes}` : ''}
-            </p>
-          ) : (
-            <p className="muted">Details shown on the morning of the party.</p>
-          )}
+  return (
+    <section className="staff" aria-labelledby="app-title">
+      <div className="staff-head">
+        <h1 id="app-title">Your schedule</h1>
+        <p className="muted">Your party time slots for the next two weeks. Details appear on the morning of each party.</p>
+      </div>
+      {error ? (
+        <div className="banner banner-danger" role="alert">
+          <CircleAlert />
+          <span>Could not load your schedule.</span>
+        </div>
+      ) : null}
+      {!error && rows.length === 0 ? <p className="empty">No upcoming parties.</p> : null}
+
+      {days.map((day) => (
+        <div key={day.date} className="day-group staff-day">
+          <h2 id={`day-${day.date}`}>
+            {day.date === today ? <><span className="staff-when">Today</span><span className="vh">, </span></> : null}
+            {day.date === tomorrow ? <><span className="staff-when">Tomorrow</span><span className="vh">, </span></> : null}
+            <span className="staff-date">{weekdayLabel(day.date)}</span>
+          </h2>
+          <ul className="staff-list" aria-labelledby={`day-${day.date}`}>
+            {day.rows.map((r) => (
+              <li key={r.party_id} className={r.revealed ? 'staff-item' : 'staff-item staff-hidden'}>
+                <p className="staff-time num">
+                  <span className="vh">
+                    Party, {weekdayLabel(r.party_date)} {formatClock(r.start_time)} to {formatClock(r.end_time)}
+                  </span>
+                  <span aria-hidden="true">
+                    {formatClock(r.start_time)} to {formatClock(r.end_time)}
+                  </span>
+                </p>
+                {r.revealed ? (
+                  <div className="staff-body">
+                    <p className="staff-who">
+                      <strong>{r.customer_name}</strong>
+                      <span className="pill pill-success">
+                        <LockOpen />
+                        Details shown
+                      </span>
+                    </p>
+                    <p className="staff-meta">
+                      <span className="num">{r.kids_count} kids</span> · <span>{r.party_type}</span>
+                    </p>
+                    {r.notes ? <p className="staff-notes">{r.notes}</p> : null}
+                  </div>
+                ) : (
+                  <div className="staff-body">
+                    <p className="staff-who">
+                      <span className="pill pill-neutral">
+                        <Lock />
+                        Details hidden
+                      </span>
+                    </p>
+                    <p className="staff-meta">Details shown on the morning of the party.</p>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
 
-      <form action="/auth/signout" method="post">
-        <button type="submit" className="secondary">Sign out</button>
+      <form action="/auth/signout" method="post" className="staff-signout">
+        <button type="submit" className="btn btn-secondary">
+          Sign out
+        </button>
       </form>
     </section>
   );
 }
 
+// "Saturday, Nov 28". UTC so the day never shifts with the server's zone.
 function weekdayLabel(date: string): string {
   return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
     weekday: 'long',
