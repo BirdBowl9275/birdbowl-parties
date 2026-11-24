@@ -151,7 +151,7 @@ export default async function SalesPartiesPage({
                                 ) : (
                                   <span className="pill pill-warning">
                                     <CircleAlert />
-                                    Not assigned
+                                    Find a hostess
                                   </span>
                                 )}
                                 {cancelled ? (
