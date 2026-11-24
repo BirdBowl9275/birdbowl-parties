@@ -136,3 +136,30 @@ export async function updateSetting(formData: FormData) {
 
   back(path, 'saved');
 }
+
+// Turns the availability override flag on or off for the active managers and admins listed on the
+// Settings page. Only those people are changed. The database guard also refuses any change to this
+// flag from anyone who is not an admin (migration 0020).
+export async function saveOverrideFlags(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const back2 = (code: AdminMessageCode): never => back('/admin/settings', code);
+
+  const { data: people, error } = await supabase
+    .from('profiles')
+    .select('id, can_enter_availability')
+    .eq('status', 'active')
+    .in('role', ['manager', 'admin']);
+  if (error) back2('save_failed');
+
+  for (const p of people ?? []) {
+    const want = formData.get(`override-${p.id as string}`) === 'on';
+    if (want === Boolean(p.can_enter_availability)) continue;
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ can_enter_availability: want })
+      .eq('id', p.id as string);
+    if (updateError) back2('save_failed');
+  }
+
+  back2('saved');
+}

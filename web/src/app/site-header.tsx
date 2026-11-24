@@ -11,7 +11,6 @@ const PARTIES: NavLink = { href: '/sales/parties', label: 'Parties' };
 const SCHEDULE: NavLink = { href: '/manager/schedule', label: 'Schedule' };
 const ROSTER: NavLink = { href: '/manager/roster', label: 'Roster' };
 const AVAILABILITY: NavLink = { href: '/manager/availability', label: 'Availability' };
-const OVERRIDES: NavLink = { href: '/admin/overrides', label: 'Overrides' };
 
 // Links to screens each role can already open. Display only.
 function linksForRole(role: string | null, canOverride: boolean): NavLink[] {
@@ -20,7 +19,6 @@ function linksForRole(role: string | null, canOverride: boolean): NavLink[] {
       return [
         { href: '/admin/users', label: 'Users' },
         { href: '/admin/settings', label: 'Settings' },
-        OVERRIDES,
         SCHEDULE,
         ROSTER,
         ...(canOverride ? [AVAILABILITY] : []),
