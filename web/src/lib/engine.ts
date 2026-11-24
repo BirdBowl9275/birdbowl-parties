@@ -223,25 +223,29 @@ export function assignWeek(
         hoursNow,
         // Under 32 hours comes first. Within each group, the fewest hours come first.
         underPriority: hoursNow < PRIORITY_BELOW_HOURS,
-        weekParties: weekCount.get(h.id) ?? 0,
+        // Fairness is kids, not party count: total kids this host already has this week.
+        weekKids: (weekBooked.get(h.id) ?? []).reduce((sum, e) => sum + e.kids, 0),
         overCeiling: newAverage > ceiling,
         deviation: Math.abs(newAverage - teamAverage),
         partiesPerDay: win.length / Math.max(offeredDays, 1),
+        offeredDays,
       };
     });
 
-    // Fewest parties this week first. Then anyone who would stay under their ceiling.
-    // Then the host whose average, with this party, lands closest to the team average.
-    // Then the lowest share of parties per day they were available in the window.
+    // Hours first (under 32, then fewest). Then anyone who would stay under their kids ceiling.
+    // Then the fewest kids this week. Then the host whose average, with this party, lands closest
+    // to the team average. Then the lowest share of parties per day they were available.
     scored.sort(
       (a, b) =>
         Number(!a.underPriority) - Number(!b.underPriority) ||
         a.hoursNow - b.hoursNow ||
-        a.weekParties - b.weekParties ||
         Number(a.overCeiling) - Number(b.overCeiling) ||
+        a.weekKids - b.weekKids ||
         a.deviation - b.deviation ||
         a.partiesPerDay - b.partiesPerDay ||
-        a.host.name.localeCompare(b.host.name) ||
+        // Still tied: the one who was available on more days in the window goes first.
+        b.offeredDays - a.offeredDays ||
+        // Only a last guard so the result never depends on the order the hosts were loaded.
         a.host.id.localeCompare(b.host.id),
     );
 
