@@ -50,11 +50,11 @@ describe('validateProfileChange', () => {
 describe('validateBulkProfileChanges', () => {
   const A = '11111111-1111-4111-8111-111111111111';
   const B = '22222222-2222-4222-8222-222222222222';
-  const row = { id: A, role: 'sales', status: 'active', tier: '', dailyCap: '0' };
+  const row = { id: A, role: 'manager', status: 'active', tier: '', dailyCap: '0' };
 
   it('accepts several valid rows', () => {
     const r = validateBulkProfileChanges([row, { ...row, id: B, role: 'viewer' }], 'admin');
-    expect(r.ok && r.value.map((v) => v.role)).toEqual(['sales', 'viewer']);
+    expect(r.ok && r.value.map((v) => v.role)).toEqual(['manager', 'viewer']);
   });
 
   it('rejects an empty list and too many rows', () => {

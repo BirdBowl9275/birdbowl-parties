@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-// Server-side check for party entry. Sales, managers and admins may enter parties.
+// Server-side check for party entry. Managers and admins may enter parties.
 // RLS in the database is the real protection; this is a second layer.
 export async function requireSalesAccess() {
   const supabase = await createSupabaseServerClient();
@@ -16,7 +16,7 @@ export async function requireSalesAccess() {
     .eq('id', user.id)
     .maybeSingle();
 
-  const allowed = ['sales', 'manager', 'admin'];
+  const allowed = ['manager', 'admin'];
   if (!profile || profile.status !== 'active' || !allowed.includes(profile.role)) {
     notFound();
   }
@@ -38,11 +38,11 @@ export async function requirePartiesView() {
     .eq('id', user.id)
     .maybeSingle();
 
-  const allowed = ['viewer', 'sales', 'manager', 'admin'];
+  const allowed = ['viewer', 'manager', 'admin'];
   if (!profile || profile.status !== 'active' || !allowed.includes(profile.role)) {
     notFound();
   }
   // Default deny: only roles that may edit get controls; any other allowed role is read-only.
-  const canEdit = ['sales', 'manager', 'admin'].includes(profile.role);
+  const canEdit = ['manager', 'admin'].includes(profile.role);
   return { supabase, user, role: profile.role as string, readOnly: !canEdit };
 }
