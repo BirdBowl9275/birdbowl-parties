@@ -53,8 +53,8 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
           <li>Rows with other jobs, skipped: {sp.skipped ?? '0'}</li>
           <li>Rows that could not be read, skipped: {sp.invalid ?? '0'}</li>
           <li>
-            Discarded, no exact match to an active account: {sp.discarded ?? '0'}. Only exact name matches are
-            kept.
+            Discarded, no exact match to an active hostess: {sp.discarded ?? '0'}. Only exact name matches to
+            active hostess accounts are kept.
           </li>
         </ul>
       ) : null}

@@ -42,13 +42,14 @@ export async function importRoster(formData: FormData) {
     back(parsed.error === 'too_many_rows' ? 'too_many_rows' : 'empty_file');
   }
 
-  // Keep a row only when its name matches an active app account exactly (ignoring case and extra
-  // spaces). Every other row is discarded and counted. Nothing is linked by guessing. A person who
-  // has no account is not a hostess, so their shifts are not needed for hour or conflict checks.
+  // Keep a row only when its name matches an active hostess account exactly (ignoring case and extra
+  // spaces). A hostess is an active profile with a tier. Managers, admins, viewers and anyone without
+  // a tier are not hostesses, so their rows are discarded and counted. Nothing is linked by guessing.
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
     .select('id, full_name')
-    .eq('status', 'active');
+    .eq('status', 'active')
+    .not('tier', 'is', null);
   if (profilesError) back('import_failed');
   const idByName = new Map<string, string>();
   for (const p of profiles ?? []) {
