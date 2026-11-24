@@ -20,7 +20,7 @@ const MESSAGES: Record<string, string> = {
   import_saved: 'Roster saved.',
 };
 
-type Search = { msg?: string; imported?: string; skipped?: string; invalid?: string; unmatched?: string };
+type Search = { msg?: string; imported?: string; skipped?: string; invalid?: string; unmatched?: string; code?: string };
 
 // Manager only. Upload the HotSchedules weekly roster. It is stored for conflict checks and hour
 // totals. The app never assigns anyone from it.
@@ -29,6 +29,8 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const text = sp.msg ? MESSAGES[sp.msg] : undefined;
   const saved = sp.msg === 'import_saved';
+  // Database error code only (no row data). Shown so the cause can be found.
+  const code = sp.code && /^[A-Za-z0-9]{1,12}$/.test(sp.code) ? sp.code : null;
 
   return (
     <section aria-labelledby="roster-title">
@@ -41,6 +43,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       {text ? (
         <p role="status" className={saved ? 'banner banner-success' : 'banner banner-danger'}>
           {text}
+          {code ? ` Database error code: ${code}.` : ''}
         </p>
       ) : null}
 

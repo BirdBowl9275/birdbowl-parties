@@ -77,8 +77,9 @@ export async function importRoster(formData: FormData) {
       .from('staff_shifts')
       .upsert(records.slice(i, i + CHUNK), { onConflict: 'source,staff_name,tier,shift_date,start_time,end_time' });
     if (error) {
-      // Earlier chunks may already be saved. Running the import again is safe.
-      back('import_stopped');
+      // Earlier chunks may already be saved. Running the import again is safe. The error code (for
+      // example 42501 for a permission problem) carries no row data, so it is safe to show.
+      redirect(`/manager/roster?msg=import_stopped&code=${encodeURIComponent(String(error.code ?? 'unknown'))}`);
     }
   }
 
