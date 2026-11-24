@@ -9,6 +9,7 @@ import { ThemeToggle } from './components/theme-toggle';
 const MY_SCHEDULE: NavLink = { href: '/app', label: 'My schedule' };
 const PARTIES: NavLink = { href: '/sales/parties', label: 'Parties' };
 const SCHEDULE: NavLink = { href: '/manager/schedule', label: 'Schedule' };
+const ROSTER: NavLink = { href: '/manager/roster', label: 'Roster' };
 
 // Links to screens each role can already open. Display only.
 function linksForRole(role: string | null): NavLink[] {
@@ -22,7 +23,7 @@ function linksForRole(role: string | null): NavLink[] {
         MY_SCHEDULE,
       ];
     case 'manager':
-      return [SCHEDULE, PARTIES, MY_SCHEDULE];
+      return [SCHEDULE, ROSTER, PARTIES, MY_SCHEDULE];
     case 'viewer':
       // Read-only: schedule and parties list. Viewers are not hosts, so no "My schedule".
       return [SCHEDULE, PARTIES];
