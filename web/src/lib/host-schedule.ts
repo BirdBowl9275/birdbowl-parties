@@ -9,6 +9,22 @@ function minutes(t: string, nextDay = false): number {
   return h * 60 + m + (nextDay ? 24 * 60 : 0);
 }
 
+// Same name rule as the roster import: trim, collapse spaces, ignore case.
+export function sameName(a: string, b: string): boolean {
+  const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+  return norm(a) === norm(b);
+}
+
+// A hostess arrives `leadMin` minutes before her first party of the day. A later party starts at
+// its own start time. Clamped at midnight.
+export function withArrival(start: string, isFirstOfDay: boolean, leadMin = 60): string {
+  if (!isFirstOfDay) return start.slice(0, 5);
+  const total = Math.max(0, minutes(start) - leadMin);
+  const h = String(Math.floor(total / 60)).padStart(2, '0');
+  const m = String(total % 60).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 // True when a shift overlaps the party. Touching at one point (a shift ending as the party starts)
 // is not an overlap.
 export function overlapsShift(party: Span, shift: Span): boolean {
