@@ -1,7 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { dayOfWeek, overlapsShift, windowCovers } from './host-schedule';
+import { dayOfWeek, overlapsShift, sameName, windowCovers, withArrival } from './host-schedule';
 
 const party = { start: '16:00', end: '18:00' };
+
+describe('sameName', () => {
+  it('matches the roster rule: case, extra spaces and edges are ignored', () => {
+    expect(sameName('  Maria   Lopez ', 'maria lopez')).toBe(true);
+    expect(sameName('Maria Lopez', 'Maria Lopes')).toBe(false);
+  });
+});
+
+describe('withArrival', () => {
+  it('starts her first party of the day an hour earlier', () => {
+    expect(withArrival('16:00', true)).toBe('15:00');
+  });
+
+  it('keeps a later party at its own start time', () => {
+    expect(withArrival('16:00', false)).toBe('16:00');
+  });
+
+  it('does not go before midnight', () => {
+    expect(withArrival('00:30', true)).toBe('00:00');
+  });
+});
 
 describe('overlapsShift', () => {
   it('flags a shift that overlaps the party', () => {

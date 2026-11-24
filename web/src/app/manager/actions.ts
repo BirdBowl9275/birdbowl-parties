@@ -5,7 +5,7 @@ import { requireManager } from '@/lib/manager-guard';
 import { validWeekStart, todayBusiness, nowClockBusiness, weekStart } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
-import { dayOfWeek, overlapsShift, windowCovers, type Span } from '@/lib/host-schedule';
+import { dayOfWeek, overlapsShift, sameName, windowCovers, withArrival, type Span } from '@/lib/host-schedule';
 import type { ScheduleCode } from '@/lib/page-messages';
 
 const PARTY_ID = /^\d+$/;
@@ -53,10 +53,30 @@ export async function reassignParty(formData: FormData) {
   let unavailable = false;
   if (hostId !== '') {
     const date = String(party.party_date);
-    const span: Span = { start: String(party.start_time), end: String(party.end_time) };
+    const partyStart = String(party.start_time);
+
+    // Her name, for shifts uploaded before she was linked to a profile.
+    const { data: hostRow, error: hostError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', hostId)
+      .maybeSingle();
+    if (hostError) back(week, 'assignment_failed');
+
+    // Her first party of the day starts an hour early (she arrives before it), so the checks use that.
+    const { data: others, error: othersError } = await supabase
+      .from('parties')
+      .select('start_time')
+      .eq('assigned_host', hostId)
+      .eq('party_date', date)
+      .eq('status', 'active')
+      .neq('id', Number(partyId));
+    if (othersError) back(week, 'assignment_failed');
+    const isFirstOfDay = !(others ?? []).some((o) => String(o.start_time) < partyStart);
+    const span: Span = { start: withArrival(partyStart, isFirstOfDay), end: String(party.end_time).slice(0, 5) };
 
     // A clash with the uploaded schedule needs the manager to tick the override.
-    const shifts = await shiftsOn(supabase, hostId, date);
+    const shifts = await shiftsOn(supabase, hostId, (hostRow?.full_name as string | null) ?? null, date);
     if (shifts === null) back(week, 'assignment_failed');
     if (shifts.some((s) => overlapsShift(span, s))) {
       if (field(formData, 'override_shift') !== 'on') back(week, 'shift_conflict');
@@ -85,19 +105,26 @@ export async function reassignParty(formData: FormData) {
 
 type Db = Awaited<ReturnType<typeof requireManager>>['supabase'];
 
-// The hostess's uploaded shifts on one date. Null when the read fails, so the save stops.
-async function shiftsOn(db: Db, hostId: string, date: string): Promise<Span[] | null> {
+// Her uploaded shifts on one date: linked to her profile, or unlinked with her name (same rule as
+// the roster import). Null when the read fails, so the save stops.
+async function shiftsOn(db: Db, hostId: string, hostName: string | null, date: string): Promise<Span[] | null> {
   const { data, error } = await db
     .from('staff_shifts')
-    .select('start_time, end_time, end_next_day')
-    .eq('profile_id', hostId)
-    .eq('shift_date', date);
+    .select('profile_id, staff_name, start_time, end_time, end_next_day')
+    .eq('shift_date', date)
+    .or(`profile_id.eq.${hostId},profile_id.is.null`);
   if (error) return null;
-  return (data ?? []).map((s) => ({
-    start: String(s.start_time),
-    end: String(s.end_time),
-    endNextDay: Boolean(s.end_next_day),
-  }));
+  return (data ?? [])
+    .filter(
+      (s) =>
+        s.profile_id === hostId ||
+        (s.profile_id === null && hostName !== null && sameName(String(s.staff_name), hostName)),
+    )
+    .map((s) => ({
+      start: String(s.start_time),
+      end: String(s.end_time),
+      endNextDay: Boolean(s.end_next_day),
+    }));
 }
 
 // Her availability windows for the party's day. Null when the read fails, which counts as unavailable.
