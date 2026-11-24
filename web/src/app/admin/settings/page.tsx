@@ -39,13 +39,13 @@ const GROUPS: Group[] = [
   {
     id: 'availability',
     title: 'Availability deadline',
-    blurb: 'When staff must have their availability in, the week before each schedule.',
+    blurb: 'When staff must have their availability in, during each schedule week.',
     items: [
       {
         key: 'availability_cutoff_dow',
         label: 'Availability cutoff day',
         unit: '1 to 7',
-        help: 'The day in the week before each schedule week: 1 is Monday, 2 is Tuesday, up to 7 for Sunday.',
+        help: 'The day within each schedule week: 1 is Monday, 2 is Tuesday, up to 7 for Sunday. Staff can change availability until this day and time.',
       },
       {
         key: 'availability_cutoff_time',

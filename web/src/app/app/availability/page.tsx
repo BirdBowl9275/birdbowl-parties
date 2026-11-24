@@ -52,8 +52,8 @@ export default async function AvailabilityPage({
   const settings = new Map((settingsRes.data ?? []).map((r) => [r.key as string, r.value]));
   const cutoffDow = Number(settings.get('availability_cutoff_dow') ?? 3);
   const cutoffTime = String(settings.get('availability_cutoff_time') ?? '20:00').replace(/"/g, '');
-  // Same rule as the database: the cutoff day falls in the week before this one.
-  const cutoffDay = addDays(monday, cutoffDow - 1 - 7);
+  // Same rule as the database (migration 0025): the cutoff day falls in this schedule week.
+  const cutoffDay = addDays(monday, cutoffDow - 1);
   const cutoffLabel = `${longDate(cutoffDay)} at ${formatClock(cutoffTime)} Eastern`;
   const hours = hoursFromSettings(settings);
 
