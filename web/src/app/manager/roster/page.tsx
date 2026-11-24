@@ -20,7 +20,7 @@ const MESSAGES: Record<string, string> = {
   import_saved: 'Roster saved.',
 };
 
-type Search = { msg?: string; imported?: string; skipped?: string; invalid?: string; unmatched?: string; code?: string };
+type Search = { msg?: string; imported?: string; skipped?: string; invalid?: string; discarded?: string; code?: string };
 
 // Manager only. Upload the HotSchedules weekly roster. It is stored for conflict checks and hour
 // totals. The app never assigns anyone from it.
@@ -53,8 +53,8 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
           <li>Rows with other jobs, skipped: {sp.skipped ?? '0'}</li>
           <li>Rows that could not be read, skipped: {sp.invalid ?? '0'}</li>
           <li>
-            Names with no app account: {sp.unmatched ?? '0'}. These show on the conflict report so they can be
-            matched.
+            Discarded, no exact match to an active account: {sp.discarded ?? '0'}. Only exact name matches are
+            kept.
           </li>
         </ul>
       ) : null}
