@@ -1,5 +1,6 @@
 // Availability form rules. Pure, so they are unit tested. The database (RLS and availability_locked)
 // is what actually enforces the cutoff and ownership.
+import { allDayWindow } from './business-hours';
 
 export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 
@@ -31,12 +32,17 @@ export function parseAvailability(days: DayInput[]): ParseResult {
   return { ok: true, windows };
 }
 
-// Parses the form fields on-1..on-7, start-1..start-7, end-1..end-7.
+// Parses the form fields on-1..on-7, start-1..start-7, end-1..end-7, and allday-1..allday-7.
+// A day ticked All day gets the business hours for that day, and its typed times are ignored.
 export function daysFromForm(get: (name: string) => string): DayInput[] {
-  return [1, 2, 3, 4, 5, 6, 7].map((day) => ({
-    day,
-    on: get(`on-${day}`) === 'on',
-    start: get(`start-${day}`).trim(),
-    end: get(`end-${day}`).trim(),
-  }));
+  return [1, 2, 3, 4, 5, 6, 7].map((day) => {
+    const allDay = get(`allday-${day}`) === 'on';
+    const hours = allDay ? allDayWindow(day) : null;
+    return {
+      day,
+      on: allDay || get(`on-${day}`) === 'on',
+      start: hours?.start ?? get(`start-${day}`).trim(),
+      end: hours?.end ?? get(`end-${day}`).trim(),
+    };
+  });
 }

@@ -97,6 +97,10 @@ export default async function AvailabilityPage({
                 <input type="checkbox" name={`on-${day}`} defaultChecked={Boolean(current)} />
                 Available
               </label>
+              <label className="check">
+                <input type="checkbox" name={`allday-${day}`} />
+                All day (opening to 11:59 p.m.)
+              </label>
               <div className="fields">
                 <div>
                   <label htmlFor={`start-${day}`}>From</label>
