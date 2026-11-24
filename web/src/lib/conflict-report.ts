@@ -19,6 +19,8 @@ export type ReportShift = {
   date: string;
   start: string;
   end: string;
+  // True when the shift ends on the following calendar day (for example 5 PM to 2 AM).
+  endNextDay?: boolean;
 };
 export type ReportAssignment = { partyId: number; hostId: string };
 
@@ -73,7 +75,7 @@ export function buildConflictReport(input: {
       continue;
     }
     const list = shiftsByHost.get(s.profileId) ?? [];
-    list.push({ tier: s.tier, date: s.date, start: s.start, end: s.end });
+    list.push({ tier: s.tier, date: s.date, start: s.start, end: s.end, endNextDay: s.endNextDay });
     shiftsByHost.set(s.profileId, list);
   }
 
