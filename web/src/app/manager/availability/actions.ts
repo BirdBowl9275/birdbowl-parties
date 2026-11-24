@@ -5,6 +5,7 @@ import { daysFromForm, parseAvailability } from '@/lib/availability';
 import { isOverrideTarget, isUuid } from '@/lib/availability-override';
 import { todayBusiness, validWeekStart } from '@/lib/parties';
 import { requireOverrideAccess } from '@/lib/override-guard';
+import { DUPLICATE_KEY } from '@/lib/availability-submission';
 
 function field(formData: FormData, name: string): string {
   const value = formData.get(name);
@@ -20,7 +21,7 @@ function back(week: string, hostess: string, message: string): never {
 // admin with the override flag can do this, and only for an active tier-1 hostess. The database
 // enforces both (migration 0020) and logs every change. The cutoff does not apply to overrides.
 export async function saveOverride(formData: FormData) {
-  const { supabase } = await requireOverrideAccess();
+  const { supabase, user } = await requireOverrideAccess();
   const week = validWeekStart(field(formData, 'week'), todayBusiness());
   const hostess = field(formData, 'hostess').toLowerCase();
   if (!isUuid(hostess)) back(week, '', 'Choose a hostess first.');
@@ -66,6 +67,14 @@ export async function saveOverride(formData: FormData) {
   if (oldIds.length > 0) {
     const { error: deleteError } = await supabase.from('availability').delete().in('id', oldIds);
     if (deleteError) back(week, hostess, 'Saved, but some earlier entries could not be removed. Refresh and check.');
+  }
+
+  // Record the submission on the hostess's behalf, so an empty override is not treated as unanswered.
+  const { error: markError } = await supabase
+    .from('availability_submissions')
+    .insert({ profile_id: hostess, week_start: week, submitted_by: user.id });
+  if (markError && markError.code !== DUPLICATE_KEY) {
+    back(week, hostess, 'Saved, but the submission could not be recorded. Try again.');
   }
 
   back(week, hostess, 'Saved. This change is logged.');
