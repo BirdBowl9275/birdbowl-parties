@@ -5,6 +5,7 @@ import { requireManager } from '@/lib/manager-guard';
 import { validWeekStart, todayBusiness, nowClockBusiness } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
+import { resolveHost } from '@/lib/host-resolution';
 import type { ScheduleCode } from '@/lib/page-messages';
 
 const PARTY_ID = /^\d+$/;
@@ -65,11 +66,13 @@ export async function saveProposedAssignments(formData: FormData) {
   const input = await loadWeekInput(supabase, week, todayBusiness(), nowClockBusiness());
   const result = assignWeek(input.parties, input.hosts, input.history, input.settings, input.offers);
   const proposed = new Map(result.assignments.map((a) => [a.partyId, a.hostId]));
+  const eligible = new Set(input.hosts.map((h) => h.id));
 
   let saved = 0;
   for (const p of input.parties) {
     if (p.fixed) continue;
-    const target = proposed.get(p.id) ?? null;
+    // Keeps a current host the engine could not replace, so the run never uncovers a party.
+    const target = resolveHost(proposed.get(p.id) ?? null, p.assignedHost, eligible);
     if (target === p.assignedHost) continue;
 
     const { error } = await supabase
