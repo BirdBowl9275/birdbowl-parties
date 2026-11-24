@@ -28,18 +28,18 @@ describe('arrivalFor', () => {
   });
 });
 
-describe('weekly hours cap (35)', () => {
-  it('allows a party that keeps the total at 35 or below', () => {
+describe('weekly hours cap (38)', () => {
+  it('allows a party that keeps the total at 38 or below', () => {
     const c = host('1', 'Ana', [{ tier: 1, date: D, start: '09:00', end: '17:00' }]); // 8 h
     // Party 14:00-19:00, first of day, arrives 13:00: 6 more hours, total 14.
     expect(checkEligibility(c, party('14:00', '19:00')).eligible).toBe(true);
   });
 
-  it('blocks a party that would push the total over 35', () => {
+  it('blocks a party that would push the total over 38', () => {
     const shifts = [0, 1, 2, 3].map((i) => ({ tier: 1 as const, date: `2026-11-${24 + i}`, start: '09:00', end: '18:00' })); // 36 h
     const r = checkEligibility(host('1', 'Ana', shifts), party('14:00', '16:00'));
     expect(r.eligible).toBe(false);
-    expect(r.reasons.join(' ')).toMatch(/limit 35/);
+    expect(r.reasons.join(' ')).toMatch(/limit 38/);
   });
 });
 

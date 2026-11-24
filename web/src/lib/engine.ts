@@ -3,14 +3,17 @@
 // The database still enforces who may save assignments (RLS and the guard trigger).
 //
 // Order of work: parties are handled biggest first (by kids). Each party goes to an
-// eligible host in the highest tier that has someone eligible. Within that tier the
-// choice is: fewest parties this week, then the host whose average kids per party
+// eligible host in the highest tier that has someone eligible. A host may never go above
+// 38 hours in the week (hours from HotSchedules shifts plus her parties, arrival included).
+// Among eligible hosts, hours come first: under 32 hours before 32 and over, and within each
+// group the fewest hours first. Then: fewest parties this week, then the host whose average kids per party
 // (over the rolling window ending on the party date) lands closest to the target,
 // then the lowest parties-per-available-day in the window, then alphabetical.
 // Counting per available day means a host who was unavailable for a stretch is not owed
 // parties for it, so absence does not give them priority over someone always available.
 
 import { addDays } from './parties';
+import { ARRIVAL_LEAD_MIN, MAX_WEEKLY_HOURS, PRIORITY_BELOW_HOURS, toMinutes } from './schedule-rules';
 
 export type Tier = 1 | 2 | 3; // 1 party hostess, 2 front desk, 3 server
 export type PartyType = 'bowling' | 'other';
@@ -21,6 +24,8 @@ export type Host = {
   id: string;
   name: string;
   tier: Tier;
+  // Hours already on this week's HotSchedules shifts, all roles. 0 when none are loaded.
+  weeklyHours: number;
   availability: Window[];
 };
 
@@ -72,7 +77,21 @@ function inWindow(entry: Entry, date: string, windowDays: number): boolean {
   return entry.date >= addDays(date, -windowDays) && entry.date <= date;
 }
 
-function eligible(host: Host, party: Party, ledger: Map<string, Entry[]>, s: EngineSettings): boolean {
+// Hours this party adds for one hostess: from her arrival to the end. The arrival is one hour
+// before the start when it is her first party of the day, as in schedule-rules.ts.
+function partyHoursFor(entries: Entry[], party: Party): number {
+  const earlierToday = entries.some((e) => e.date === party.date && e.start < party.start);
+  const lead = earlierToday ? 0 : ARRIVAL_LEAD_MIN;
+  return (toMinutes(party.end) - toMinutes(party.start) + lead) / 60;
+}
+
+function eligible(
+  host: Host,
+  party: Party,
+  ledger: Map<string, Entry[]>,
+  s: EngineSettings,
+  hoursNow: number,
+): boolean {
   // Bowling parties that start after the cutoff go to servers only. This overrides tier order.
   if (party.type === 'bowling' && party.start > s.bowlingServerAfter && host.tier !== 3) return false;
 
@@ -81,6 +100,9 @@ function eligible(host: Host, party: Party, ledger: Map<string, Entry[]>, s: Eng
 
   // No overlapping time slots for the same host. There is no daily party limit.
   if (sameDay.some((e) => party.start < e.end && e.start < party.end)) return false;
+
+  // Hard limit: never above MAX_WEEKLY_HOURS (38) in the week.
+  if (hoursNow + partyHoursFor(entries, party) > MAX_WEEKLY_HOURS) return false;
 
   // Only people marked available for the whole party on that day.
   return host.availability.some(
@@ -98,6 +120,9 @@ export function assignWeek(
   const hostById = new Map(hosts.map((h) => [h.id, h]));
   const ledger = new Map<string, Entry[]>(hosts.map((h) => [h.id, []]));
   const weekCount = new Map<string, number>(hosts.map((h) => [h.id, 0]));
+  // Hours this week from parties this run (fixed and newly assigned), on top of weeklyHours.
+  const weekHours = new Map<string, number>(hosts.map((h) => [h.id, 0]));
+  const hoursNowFor = (h: Host) => h.weeklyHours + (weekHours.get(h.id) ?? 0);
 
   // Distinct days each host was available, for the per-available-day fairness share.
   const offerDates = new Map<string, Set<string>>();
@@ -122,6 +147,10 @@ export function assignWeek(
     if (p.fixed) {
       if (p.assignedHost && hostById.has(p.assignedHost)) {
         result.assignments.push({ partyId: p.id, hostId: p.assignedHost });
+        const fixedHost = hostById.get(p.assignedHost);
+        if (fixedHost) {
+          weekHours.set(p.assignedHost, (weekHours.get(p.assignedHost) ?? 0) + partyHoursFor(ledger.get(p.assignedHost) ?? [], p));
+        }
         record(p.assignedHost, { date: p.date, start: p.start, end: p.end, kids: p.kids });
         weekCount.set(p.assignedHost, (weekCount.get(p.assignedHost) ?? 0) + 1);
       } else {
@@ -143,7 +172,7 @@ export function assignWeek(
     : 0;
 
   for (const p of ordered) {
-    const candidates = hosts.filter((h) => eligible(h, p, ledger, settings));
+    const candidates = hosts.filter((h) => eligible(h, p, ledger, settings, hoursNowFor(h)));
     if (candidates.length === 0) {
       result.unassigned.push({ partyId: p.id, reason: 'no_eligible_host' });
       continue;
@@ -176,8 +205,12 @@ export function assignWeek(
       const offeredDays = [...(offerDates.get(h.id) ?? [])].filter(
         (d) => d >= addDays(p.date, -settings.windowDays) && d <= p.date,
       ).length;
+      const hoursNow = hoursNowFor(h);
       return {
         host: h,
+        hoursNow,
+        // Under 32 hours comes first. Within each group, the fewest hours come first.
+        underPriority: hoursNow < PRIORITY_BELOW_HOURS,
         weekParties: weekCount.get(h.id) ?? 0,
         overCeiling: newAverage > ceiling,
         deviation: Math.abs(newAverage - teamAverage),
@@ -190,6 +223,8 @@ export function assignWeek(
     // Then the lowest share of parties per day they were available in the window.
     scored.sort(
       (a, b) =>
+        Number(!a.underPriority) - Number(!b.underPriority) ||
+        a.hoursNow - b.hoursNow ||
         a.weekParties - b.weekParties ||
         Number(a.overCeiling) - Number(b.overCeiling) ||
         a.deviation - b.deviation ||
@@ -200,6 +235,7 @@ export function assignWeek(
 
     const chosen = scored[0].host;
     result.assignments.push({ partyId: p.id, hostId: chosen.id });
+    weekHours.set(chosen.id, (weekHours.get(chosen.id) ?? 0) + partyHoursFor(ledger.get(chosen.id) ?? [], p));
     record(chosen.id, { date: p.date, start: p.start, end: p.end, kids: p.kids });
     weekCount.set(chosen.id, (weekCount.get(chosen.id) ?? 0) + 1);
   }
