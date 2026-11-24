@@ -8,8 +8,8 @@ describe('homePathForRole', () => {
     expect(homePathForRole('viewer')).toBe('/manager/schedule');
   });
 
-  it('sends staff to availability first, and anyone with no known role to the staff schedule', () => {
-    expect(homePathForRole('staff')).toBe('/app/availability');
+  it('sends staff to their schedule, and anyone with no known role to the staff schedule', () => {
+    expect(homePathForRole('staff')).toBe('/app');
     expect(homePathForRole(null)).toBe('/app');
   });
 });
