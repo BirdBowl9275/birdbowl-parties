@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
 import { addDays, todayBusiness } from '@/lib/parties';
 import { PartyType } from '../components/party-type';
+import { releaseParty } from './release-actions';
 import { CircleAlert, Lock, LockOpen } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,8 @@ type ScheduleRow = {
 
 // Staff see their own time slots. Party details appear only after the morning reveal.
 // The my_schedule function enforces both rules in the database.
-export default async function AppHomePage() {
+export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
+  const { msg } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -50,6 +52,11 @@ export default async function AppHomePage() {
 
   return (
     <section className="staff" aria-labelledby="app-title">
+      {msg ? (
+        <p role="status" className="muted">
+          {msg}
+        </p>
+      ) : null}
       <div className="staff-head">
         <h1 id="app-title">Your schedule</h1>
         <p className="muted">Your party time slots for the next two weeks. Party details appear at 8:00 a.m. on the day of each party, or right away once a manager locks the assignment.</p>
@@ -108,6 +115,12 @@ export default async function AppHomePage() {
                     <p className="staff-meta">Details shown at 8:00 a.m. on the day of the party.</p>
                   </div>
                 )}
+                <form action={releaseParty} className="staff-release">
+                  <input type="hidden" name="party_id" value={r.party_id} />
+                  <button type="submit" className="secondary">
+                    Release this party
+                  </button>
+                </form>
               </li>
             ))}
           </ul>
