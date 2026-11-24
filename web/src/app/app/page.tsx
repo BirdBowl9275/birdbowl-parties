@@ -52,7 +52,7 @@ export default async function AppHomePage() {
     <section className="staff" aria-labelledby="app-title">
       <div className="staff-head">
         <h1 id="app-title">Your schedule</h1>
-        <p className="muted">Your party time slots for the next two weeks. Details appear on the morning of each party.</p>
+        <p className="muted">Your party time slots for the next two weeks. Party details appear at 8:00 a.m. on the day of each party, or right away once a manager locks the assignment.</p>
         <p>
           <Link href="/app/availability">Set my availability</Link>
         </p>
@@ -105,7 +105,7 @@ export default async function AppHomePage() {
                         Details hidden
                       </span>
                     </p>
-                    <p className="staff-meta">Details shown on the morning of the party.</p>
+                    <p className="staff-meta">Details shown at 8:00 a.m. on the day of the party.</p>
                   </div>
                 )}
               </li>
