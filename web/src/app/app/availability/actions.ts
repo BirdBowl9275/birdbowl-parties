@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { daysFromForm, parseAvailability } from '@/lib/availability';
 import { todayBusiness, validWeekStart } from '@/lib/parties';
+import { DUPLICATE_KEY } from '@/lib/availability-submission';
 
 function back(week: string, message: string): never {
   redirect(`/app/availability?week=${encodeURIComponent(week)}&msg=${encodeURIComponent(message)}`);
@@ -59,6 +60,14 @@ export async function saveAvailability(formData: FormData) {
   if (oldIds.length > 0) {
     const { error: deleteError } = await supabase.from('availability').delete().in('id', oldIds);
     if (deleteError) back(week, 'Saved, but some earlier entries could not be removed. Refresh and check.');
+  }
+
+  // Record the submission, so an empty week is not treated as unanswered. A repeat save is fine.
+  const { error: markError } = await supabase
+    .from('availability_submissions')
+    .insert({ profile_id: user.id, week_start: week, submitted_by: user.id });
+  if (markError && markError.code !== DUPLICATE_KEY) {
+    back(week, 'Saved, but the submission could not be recorded. Try again.');
   }
 
   // Saved: staff go on to their schedule.

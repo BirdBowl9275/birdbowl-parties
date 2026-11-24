@@ -60,6 +60,25 @@ export default async function ManagerAvailabilityPage({
     );
   }
 
+  let submittedOn: string | null = null;
+  if (hostess) {
+    const { data: marker } = await supabase
+      .from('availability_submissions')
+      .select('submitted_at')
+      .eq('profile_id', hostess.id)
+      .eq('week_start', monday)
+      .maybeSingle();
+    if (marker?.submitted_at) {
+      submittedOn = new Date(marker.submitted_at as string).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'America/New_York',
+      });
+    }
+  }
+
   return (
     <section className="card wide" aria-labelledby="override-title">
       <h1 id="override-title">Enter hostess availability</h1>
@@ -107,6 +126,7 @@ export default async function ManagerAvailabilityPage({
           <p>
             Entering availability for <strong>{hostess.full_name ?? 'this hostess'}</strong>, week of {monday}.
           </p>
+          <p className="muted">{submittedOn ? `Submitted ${submittedOn}.` : 'Not submitted yet.'}</p>
           {[1, 2, 3, 4, 5, 6, 7].map((day) => {
             const current = mine.get(day);
             const date = addDays(monday, day - 1);
