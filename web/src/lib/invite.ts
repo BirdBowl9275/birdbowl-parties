@@ -20,9 +20,9 @@ export function validateInvite(input: { email: string; fullName: string }): Invi
   return { ok: true, value: { email, fullName } };
 }
 
-// Invites per inviter in any 24 hours (security review WEB-INV-02). Raised from 10 to 50 on
-// Jeff's request, 2026-11-23, to finish onboarding. Set back to 10 when onboarding is done.
-export const INVITE_DAILY_LIMIT = 50;
+// Invites per inviter in any 24 hours (security review WEB-INV-02). Set back to 10 on Jeff's
+// request, 2026-11-23, now that onboarding is done.
+export const INVITE_DAILY_LIMIT = 10;
 
 // Shown on /invite?msg=<code>. Only these fixed texts can appear, and no name or email ever
 // goes into the URL (security review WEB-INV-04).
