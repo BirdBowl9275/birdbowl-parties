@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Party Hostess Scheduler: Staff Guide</title>
+<style>
+  @page { size: Letter; margin: 0.6in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: #1d2430; margin: 0; font-size: 14px; line-height: 1.5; }
+  .page { page-break-after: always; min-height: 9.6in; position: relative; }
+  .page:last-child { page-break-after: auto; }
+  h1 { font-size: 30px; margin: 0 0 6px; color: #0f3d5e; }
+  h2 { font-size: 22px; margin: 0 0 8px; color: #0f3d5e; }
+  .step-no { display: inline-block; background: #0f3d5e; color: #fff; border-radius: 50%; width: 26px; height: 26px; text-align: center; line-height: 26px; font-weight: 700; margin-right: 8px; }
+  .lede { font-size: 15px; color: #47505e; margin: 0 0 18px; }
+  .steps { margin: 0; padding: 0; list-style: none; }
+  .steps li { margin: 0 0 14px; padding: 0; }
+  .tip { background: #eef6fb; border-left: 4px solid #2f7bb5; padding: 10px 14px; border-radius: 4px; margin: 16px 0; }
+  .warn { background: #fff5e6; border-left: 4px solid #d98a1f; padding: 10px 14px; border-radius: 4px; margin: 16px 0; }
+  .fig { border: 1px solid #dde3ea; border-radius: 10px; padding: 14px; background: #fafbfc; margin: 14px 0; text-align: center; }
+  .fig figcaption { font-size: 12px; color: #6b7585; margin-top: 6px; }
+  .cover { text-align: center; padding-top: 1.2in; }
+  .cover h1 { font-size: 36px; }
+  .cover .sub { font-size: 17px; color: #47505e; margin-bottom: 30px; }
+  .toc { margin: 40px auto 0; max-width: 4.8in; text-align: left; font-size: 15px; }
+  .toc li { margin: 6px 0; }
+  .footer { position: absolute; bottom: 0; left: 0; right: 0; font-size: 11px; color: #8a93a1; border-top: 1px solid #e5e9ef; padding-top: 6px; }
+  .q { font-weight: 700; color: #0f3d5e; }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<section class="page cover">
+  <svg width="260" height="170" viewBox="0 0 260 170" aria-hidden="true">
+    <rect x="70" y="10" width="120" height="150" rx="16" fill="#0f3d5e"/>
+    <rect x="80" y="30" width="100" height="110" rx="6" fill="#ffffff"/>
+    <rect x="90" y="42" width="80" height="12" rx="3" fill="#2f7bb5"/>
+    <rect x="90" y="62" width="80" height="10" rx="3" fill="#dfe8f0"/>
+    <rect x="90" y="80" width="80" height="10" rx="3" fill="#dfe8f0"/>
+    <rect x="90" y="98" width="80" height="10" rx="3" fill="#dfe8f0"/>
+    <circle cx="200" cy="130" r="22" fill="#f2b233"/>
+    <path d="M190 130 l7 7 l13 -14" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="36" cy="60" r="10" fill="#f2b233"/>
+    <circle cx="228" cy="40" r="6" fill="#2f7bb5"/>
+  </svg>
+  <h1>Party Hostess Scheduler</h1>
+  <div class="sub">Staff guide: how to use the app</div>
+  <ol class="toc">
+    <li>1. Signing in</li>
+    <li>2. Entering your availability</li>
+    <li>3. Your schedule</li>
+    <li>4. Releasing a party</li>
+    <li>5. How parties are shared out, and the fairness scale</li>
+    <li>6. Signing out, and common questions</li>
+  </ol>
+  <div class="footer">Bird Bowl · Staff guide · Keep this for reference</div>
+</section>
+
+<!-- 1. Signing in -->
+<section class="page">
+  <h2><span class="step-no">1</span>Signing in</h2>
+  <p class="lede">There is no password. The app emails you a one-time code each time you sign in.</p>
+  <ol class="steps">
+    <li><span class="step-no">a</span> Open the app and enter your <strong>work email</strong>.</li>
+    <li><span class="step-no">b</span> Check your email for a <strong>one-time code</strong> and type it in.</li>
+    <li><span class="step-no">c</span> You are in. New staff go to <strong>Availability</strong> first if next week is not filled in yet.</li>
+  </ol>
+  <div class="fig">
+    <svg width="330" height="200" viewBox="0 0 330 200" aria-hidden="true">
+      <rect x="95" y="6" width="140" height="188" rx="16" fill="#ffffff" stroke="#9aa6b5" stroke-width="2"/>
+      <text x="165" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#0f3d5e">Sign in</text>
+      <text x="110" y="62" font-size="9" fill="#47505e">Work email</text>
+      <rect x="110" y="68" width="110" height="20" rx="4" fill="#fff" stroke="#9aa6b5"/>
+      <text x="116" y="82" font-size="9" fill="#1d2430">you@birdbowl.com</text>
+      <rect x="110" y="98" width="110" height="20" rx="4" fill="#2f7bb5"/>
+      <text x="165" y="112" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">Send code</text>
+      <text x="110" y="140" font-size="9" fill="#47505e">One-time code</text>
+      <g fill="#fff" stroke="#9aa6b5">
+        <rect x="110" y="146" width="18" height="20" rx="3"/><rect x="132" y="146" width="18" height="20" rx="3"/>
+        <rect x="154" y="146" width="18" height="20" rx="3"/><rect x="176" y="146" width="18" height="20" rx="3"/>
+        <rect x="198" y="146" width="18" height="20" rx="3"/>
+      </g>
+      <text x="119" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#0f3d5e">4</text>
+      <text x="141" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#0f3d5e">8</text>
+      <text x="163" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#0f3d5e">2</text>
+      <text x="185" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#0f3d5e">9</text>
+      <text x="207" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#0f3d5e">1</text>
+      <path d="M40 60 L62 60 M40 60 L48 52 M40 60 L48 68" stroke="#2f7bb5" stroke-width="2.5" fill="none"/>
+      <text x="8" y="50" font-size="9" fill="#6b7585">Step 1</text>
+      <path d="M262 150 L240 150 M262 150 L254 142 M262 150 L254 158" stroke="#2f7bb5" stroke-width="2.5" fill="none"/>
+      <text x="264" y="146" font-size="9" fill="#6b7585">Step 2</text>
+    </svg>
+    <figcaption>Enter your work email, then the code from the email.</figcaption>
+  </div>
+  <div class="tip"><strong>Waiting for approval?</strong> When you first sign in, a manager must approve your account. Until then you will see a waiting screen. This is normal. Ask your manager if it takes too long.</div>
+  <div class="footer">Staff guide · 1</div>
+</section>
+
+<!-- 2. Availability -->
+<section class="page">
+  <h2><span class="step-no">2</span>Entering your availability</h2>
+  <p class="lede">Tell us the times you can work next week. Your manager uses this to build the schedule.</p>
+  <ol class="steps">
+    <li><span class="step-no">1</span> Open <strong>Availability</strong> from the menu.</li>
+    <li><span class="step-no">2</span> Tick each day you can work.</li>
+    <li><span class="step-no">3</span> Set the <strong>From</strong> and <strong>Until</strong> times for that day.</li>
+    <li><span class="step-no">4</span> Press <strong>Save availability</strong>.</li>
+  </ol>
+  <div class="fig">
+    <svg width="360" height="190" viewBox="0 0 360 190" aria-hidden="true">
+      <rect x="10" y="6" width="340" height="176" rx="10" fill="#ffffff" stroke="#9aa6b5" stroke-width="1.5"/>
+      <text x="26" y="30" font-size="13" font-weight="700" fill="#0f3d5e">My availability</text>
+      <g font-size="10" fill="#1d2430">
+        <rect x="26" y="42" width="14" height="14" rx="3" fill="#2f7bb5"/><path d="M29 49 l3 3 l6 -6" stroke="#fff" stroke-width="2" fill="none"/>
+        <text x="50" y="53">Monday</text>
+        <rect x="150" y="46" width="48" height="16" rx="3" fill="#fff" stroke="#9aa6b5"/><text x="156" y="58">5:00 p.m.</text>
+        <text x="206" y="58">to</text>
+        <rect x="222" y="46" width="48" height="16" rx="3" fill="#fff" stroke="#9aa6b5"/><text x="228" y="58">9:00 p.m.</text>
+
+        <rect x="26" y="72" width="14" height="14" rx="3" fill="#fff" stroke="#9aa6b5"/>
+        <text x="50" y="83" fill="#6b7585">Tuesday (not available)</text>
+
+        <rect x="26" y="102" width="14" height="14" rx="3" fill="#2f7bb5"/><path d="M29 109 l3 3 l6 -6" stroke="#fff" stroke-width="2" fill="none"/>
+        <text x="50" y="113">Friday</text>
+        <rect x="150" y="106" width="48" height="16" rx="3" fill="#fff" stroke="#9aa6b5"/><text x="156" y="118">4:00 p.m.</text>
+        <text x="206" y="118">to</text>
+        <rect x="222" y="106" width="48" height="16" rx="3" fill="#fff" stroke="#9aa6b5"/><text x="228" y="118">10:00 p.m.</text>
+      </g>
+      <rect x="26" y="140" width="130" height="28" rx="6" fill="#0f3d5e"/>
+      <text x="91" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Save availability</text>
+      <path d="M300 118 l-6 -6 M300 118 l-6 6" stroke="#d98a1f" stroke-width="0"/>
+    </svg>
+    <figcaption>Tick the days you can work, then set the times. Save when you are done.</figcaption>
+  </div>
+  <div class="warn"><strong>Locked week.</strong> The page shows a cutoff time, in Eastern time. After it passes, the week is locked. You can no longer change it. Ask a manager to change it for you.</div>
+  <div class="tip"><strong>Can't work any day next week?</strong> Untick every day and press Save. This still counts as your answer, so the app stops asking you to fill it in.</div>
+  <div class="footer">Staff guide · 2</div>
+</section>
+
+<!-- 3. Schedule -->
+<section class="page">
+  <h2><span class="step-no">3</span>Your schedule</h2>
+  <p class="lede">This is your home screen. It shows your party time slots for the next two weeks.</p>
+  <ul class="steps">
+    <li><span class="step-no">•</span> Each card is one party time slot, with the day and start and end times.</li>
+    <li><span class="step-no">•</span> <strong>Details hidden</strong> means the party details are not shown yet. They appear at <strong>8:00 a.m. on the day of the party</strong>, or sooner if a manager locks the assignment.</li>
+    <li><span class="step-no">•</span> <strong>Details shown</strong> means you can see the customer name, number of kids, party type and any notes.</li>
+    <li><span class="step-no">•</span> A line that says <strong>Party starts</strong> means you arrive earlier than the party's start time.</li>
+  </ul>
+  <div class="fig">
+    <svg width="360" height="230" viewBox="0 0 360 230" aria-hidden="true">
+      <rect x="10" y="6" width="340" height="218" rx="10" fill="#ffffff" stroke="#9aa6b5" stroke-width="1.5"/>
+      <text x="26" y="30" font-size="13" font-weight="700" fill="#0f3d5e">Your schedule</text>
+      <text x="26" y="46" font-size="9" fill="#6b7585">Party time slots for the next two weeks</text>
+
+      <rect x="26" y="58" width="308" height="66" rx="8" fill="#f4f7fa" stroke="#dde3ea"/>
+      <text x="38" y="76" font-size="10" font-weight="700" fill="#1d2430">Saturday, Nov 28</text>
+      <text x="38" y="92" font-size="13" font-weight="700" fill="#0f3d5e">4:00 p.m. to 6:00 p.m.</text>
+      <rect x="236" y="66" width="86" height="20" rx="10" fill="#eceff3"/>
+      <text x="279" y="80" text-anchor="middle" font-size="9" fill="#47505e">Details hidden</text>
+      <text x="38" y="114" font-size="9" fill="#6b7585">Details shown at 8:00 a.m. on the day of the party</text>
+
+      <rect x="26" y="134" width="308" height="66" rx="8" fill="#f4f7fa" stroke="#dde3ea"/>
+      <text x="38" y="152" font-size="10" font-weight="700" fill="#1d2430">Sunday, Nov 29</text>
+      <text x="38" y="168" font-size="13" font-weight="700" fill="#0f3d5e">3:00 p.m. to 6:00 p.m.</text>
+      <rect x="236" y="142" width="86" height="20" rx="10" fill="#e3f3e8"/>
+      <text x="279" y="156" text-anchor="middle" font-size="9" fill="#1f6b3a">Details shown</text>
+      <text x="38" y="190" font-size="9" fill="#6b7585">Party starts 4:00 p.m. (you arrive an hour early)</text>
+    </svg>
+    <figcaption>Example cards. Your own dates and times will differ.</figcaption>
+  </div>
+  <div class="footer">Staff guide · 3</div>
+</section>
+
+<!-- 4. Releasing -->
+<section class="page">
+  <h2><span class="step-no">4</span>Releasing a party</h2>
+  <p class="lede">Can't make a party? You can release it yourself, if it is still early enough.</p>
+  <ol class="steps">
+    <li><span class="step-no">1</span> Find the party on <strong>Your schedule</strong>.</li>
+    <li><span class="step-no">2</span> Press <strong>Release this party</strong>.</li>
+    <li><span class="step-no">3</span> The app looks for another eligible hostess who is free. If one is found, the party moves to her. If not, the party goes back to your manager to cover.</li>
+  </ol>
+  <div class="fig">
+    <svg width="360" height="170" viewBox="0 0 360 170" aria-hidden="true">
+      <rect x="10" y="6" width="340" height="158" rx="10" fill="#ffffff" stroke="#9aa6b5" stroke-width="1.5"/>
+      <rect x="26" y="20" width="308" height="60" rx="8" fill="#f4f7fa" stroke="#dde3ea"/>
+      <text x="38" y="40" font-size="10" font-weight="700" fill="#1d2430">Saturday, Nov 28</text>
+      <text x="38" y="58" font-size="13" font-weight="700" fill="#0f3d5e">4:00 p.m. to 6:00 p.m.</text>
+      <rect x="26" y="94" width="150" height="30" rx="6" fill="#ffffff" stroke="#b03a2e" stroke-width="1.5"/>
+      <text x="101" y="113" text-anchor="middle" font-size="11" font-weight="700" fill="#b03a2e">Release this party</text>
+      <path d="M200 109 L232 109" stroke="#2f7bb5" stroke-width="2.5"/><path d="M226 103 L234 109 L226 115" stroke="#2f7bb5" stroke-width="2.5" fill="none"/>
+      <rect x="244" y="94" width="90" height="30" rx="6" fill="#e3f3e8"/>
+      <text x="289" y="113" text-anchor="middle" font-size="10" fill="#1f6b3a">Party moves</text>
+      <text x="26" y="146" font-size="9" fill="#6b7585">Releases close 48 hours before the party starts.</text>
+    </svg>
+    <figcaption>Press Release, and the app handles the handover.</figcaption>
+  </div>
+  <div class="warn"><strong>The button disappears 48 hours before the party.</strong> From then on, the party cannot be released. Also, a party that your manager has locked cannot be released. Call or message your manager straight away if you cannot attend.</div>
+  <div class="footer">Staff guide · 4</div>
+</section>
+
+<!-- 5. How parties are shared out -->
+<section class="page">
+  <h2><span class="step-no">5</span>How parties are shared out</h2>
+  <p class="lede">The app suggests who gets each party, so that the work is spread fairly. Your manager can always change a suggestion.</p>
+  <ol class="steps">
+    <li><span class="step-no">1</span> <strong>Only people who are free can be offered a party.</strong> You must be available for the whole time, from arrival to the end. You need a gap of at least 30 minutes between parties. You can't be on a front-desk or server shift at the same time.</li>
+    <li><span class="step-no">2</span> <strong>Big parties are handed out first</strong> (the most kids first).</li>
+    <li><span class="step-no">3</span> <strong>Party hostesses come first</strong>, then the other roles, if no hostess is free.</li>
+    <li><span class="step-no">4</span> <strong>Hours decide the order.</strong> Each person can work up to <strong>38 hours</strong> a week, counting shifts and parties. Anyone under <strong>32 hours</strong> is offered parties before anyone at 32 or more. Among them, the fewest hours come first.</li>
+    <li><span class="step-no">5</span> If hours are level, the app looks at the number of parties you have this week, then the average number of kids you have had. Then it looks at how often you were available in the last 30 days. The last tie-break is alphabetical.</li>
+  </ol>
+  <div class="fig">
+    <svg width="380" height="170" viewBox="0 0 380 170" aria-hidden="true">
+      <rect x="10" y="6" width="360" height="158" rx="10" fill="#ffffff" stroke="#9aa6b5" stroke-width="1.5"/>
+      <text x="26" y="28" font-size="13" font-weight="700" fill="#0f3d5e">The fairness scale: weekly hours</text>
+      <rect x="26" y="50" width="328" height="26" rx="6" fill="#e3f3e8"/>
+      <rect x="26" y="50" width="26" height="26" rx="6" fill="#e3f3e8"/>
+      <rect x="26" y="50" width="262" height="26" rx="6" fill="#bfe3cb"/>
+      <rect x="288" y="50" width="48" height="26" rx="0" fill="#f6e7c4"/>
+      <rect x="336" y="50" width="18" height="26" rx="6" fill="#f2c9c4"/>
+      <line x1="288" y1="44" x2="288" y2="82" stroke="#47505e" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <text x="288" y="94" text-anchor="middle" font-size="10" fill="#47505e">32 h</text>
+      <text x="345" y="94" text-anchor="middle" font-size="10" fill="#47505e">38 h</text>
+      <text x="26" y="94" font-size="10" fill="#47505e">0 h</text>
+      <text x="120" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#1f6b3a">First in line</text>
+      <text x="312" y="68" text-anchor="middle" font-size="10" font-weight="700" fill="#8a5a0b">Later</text>
+      <text x="26" y="120" font-size="10" fill="#1d2430"><tspan font-weight="700">Under 32 h:</tspan> offered parties first, fewest hours first.</text>
+      <text x="26" y="138" font-size="10" fill="#1d2430"><tspan font-weight="700">32 to 38 h:</tspan> offered after everyone under 32 h.</text>
+      <text x="26" y="156" font-size="10" fill="#1d2430"><tspan font-weight="700">Over 38 h:</tspan> never offered another party that week.</text>
+    </svg>
+    <figcaption>The fairness scale. The lower your hours, the earlier you are offered a party.</figcaption>
+  </div>
+  <div class="tip"><strong>Being unavailable doesn't count against you.</strong> The fairness count looks only at the days you were free, so a week away doesn't put you behind.</div>
+  <div class="warn"><strong>Ask your manager</strong> if you want a party you have been offered reviewed, or if your hours look wrong. The app's suggestion is not final until your manager saves it.</div>
+  <div class="footer">Staff guide · 5</div>
+</section>
+
+<!-- 6. Sign out and questions -->
+<section class="page">
+  <h2><span class="step-no">6</span>Signing out, and common questions</h2>
+  <p class="lede">Sign out when you finish, especially on a shared device.</p>
+  <ul class="steps">
+    <li><span class="step-no">•</span> Scroll to the bottom of <strong>Your schedule</strong> and press <strong>Sign out</strong>.</li>
+  </ul>
+  <h3 style="margin:18px 0 6px;color:#0f3d5e;">Common questions</h3>
+  <p><span class="q">I didn't get the code.</span> Check your spam folder. Then go back to the sign-in screen and ask for a new code.</p>
+  <p><span class="q">Why can't I change my availability?</span> The week is locked after the cutoff. Ask a manager to change it.</p>
+  <p><span class="q">Why can't I see the party details?</span> Details appear at 8:00 a.m. on the day of the party, or sooner if a manager has locked the assignment.</p>
+  <p><span class="q">The app keeps sending me to Availability.</span> Save your availability for next week, even if you can't work any day. Once saved, you will go straight to your schedule.</p>
+  <p><span class="q">I can't release a party.</span> The release button closes 48 hours before the party starts. Contact your manager.</p>
+  <div class="tip"><strong>Need more help?</strong> Ask your manager. For a sign-in problem, ask them to check that your account is approved.</div>
+  <div class="footer">Staff guide · 6</div>
+</section>
+
+</body>
+</html>

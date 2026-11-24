@@ -42,7 +42,7 @@ export function validateParty(input: PartyInput): ValidationResult<PartyValue> {
   const startTime = input.startTime.trim();
   const endTime = input.endTime.trim();
   if (!TIME.test(startTime) || !TIME.test(endTime)) {
-    return { ok: false, error: 'Times must look like 14:00.' };
+    return { ok: false, error: 'Pick a start and end time, like 2:00 p.m.' };
   }
   if (endTime <= startTime) return { ok: false, error: 'End time must be after the start time.' };
 
