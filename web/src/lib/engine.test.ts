@@ -46,6 +46,18 @@ describe('weekly hours: priority and the 38-hour limit', () => {
     expect(hostOf(r, 'new')).toBe('b');
   });
 
+  it('counts the first-party arrival hour once a day, even when the earlier party is added last', () => {
+    // A is at 35 hours and already holds a 16:00-17:00 party. Adding 10:00-11:00 earlier that day
+    // makes it her first party, so the day's arrival hour is counted once: 35 + 1 + 1 + 1 = 38.
+    // Counting it twice would reach 39 and wrongly rule her out.
+    const parties = [
+      party('late', { start: '16:00', end: '17:00', fixed: true, assignedHost: 'a' }),
+      party('early', { start: '10:00', end: '11:00' }),
+    ];
+    const r = assignWeek(parties, [host('a', 1, { weeklyHours: 35 })], [], settings);
+    expect(hostOf(r, 'early')).toBe('a');
+  });
+
   it('still offers a party to a hostess between 32 and 38 hours when no one else can take it', () => {
     // A is at 33 hours. The party adds 2, so she reaches 35, which is within the 38-hour limit.
     const parties = [party('new', { start: '14:00', end: '15:00' })];

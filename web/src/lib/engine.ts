@@ -77,12 +77,19 @@ function inWindow(entry: Entry, date: string, windowDays: number): boolean {
   return entry.date >= addDays(date, -windowDays) && entry.date <= date;
 }
 
-// Hours this party adds for one hostess: from her arrival to the end. The arrival is one hour
-// before the start when it is her first party of the day, as in schedule-rules.ts.
-function partyHoursFor(entries: Entry[], party: Party): number {
-  const earlierToday = entries.some((e) => e.date === party.date && e.start < party.start);
-  const lead = earlierToday ? 0 : ARRIVAL_LEAD_MIN;
-  return (toMinutes(party.end) - toMinutes(party.start) + lead) / 60;
+// A hostess's hours for the week from the parties she holds: each party's length, plus one hour of
+// arrival before her first party of each day (schedule-rules.ts). Recalculated from the list each
+// time, so the order parties are booked in does not change the total.
+function weekHoursOf(list: Entry[]): number {
+  let total = 0;
+  const earliestByDate = new Map<string, number>();
+  for (const e of list) {
+    total += (toMinutes(e.end) - toMinutes(e.start)) / 60;
+    const start = toMinutes(e.start);
+    const current = earliestByDate.get(e.date);
+    if (current === undefined || start < current) earliestByDate.set(e.date, start);
+  }
+  return total + earliestByDate.size * (ARRIVAL_LEAD_MIN / 60);
 }
 
 function eligible(
@@ -90,7 +97,7 @@ function eligible(
   party: Party,
   ledger: Map<string, Entry[]>,
   s: EngineSettings,
-  hoursNow: number,
+  hoursAfter: number,
 ): boolean {
   // Bowling parties that start after the cutoff go to servers only. This overrides tier order.
   if (party.type === 'bowling' && party.start > s.bowlingServerAfter && host.tier !== 3) return false;
@@ -101,8 +108,8 @@ function eligible(
   // No overlapping time slots for the same host. There is no daily party limit.
   if (sameDay.some((e) => party.start < e.end && e.start < party.end)) return false;
 
-  // Hard limit: never above MAX_WEEKLY_HOURS (38) in the week.
-  if (hoursNow + partyHoursFor(entries, party) > MAX_WEEKLY_HOURS) return false;
+  // Hard limit: never above MAX_WEEKLY_HOURS (38) in the week, with the first-party arrival hour counted.
+  if (hoursAfter > MAX_WEEKLY_HOURS) return false;
 
   // Only people marked available for the whole party on that day.
   return host.availability.some(
@@ -120,9 +127,12 @@ export function assignWeek(
   const hostById = new Map(hosts.map((h) => [h.id, h]));
   const ledger = new Map<string, Entry[]>(hosts.map((h) => [h.id, []]));
   const weekCount = new Map<string, number>(hosts.map((h) => [h.id, 0]));
-  // Hours this week from parties this run (fixed and newly assigned), on top of weeklyHours.
-  const weekHours = new Map<string, number>(hosts.map((h) => [h.id, 0]));
-  const hoursNowFor = (h: Host) => h.weeklyHours + (weekHours.get(h.id) ?? 0);
+  // This run's parties per host (fixed and newly assigned), for the weekly hours total.
+  const weekBooked = new Map<string, Entry[]>(hosts.map((h) => [h.id, []]));
+  const hoursNowFor = (h: Host) => h.weeklyHours + weekHoursOf(weekBooked.get(h.id) ?? []);
+  const hoursAfterFor = (h: Host, p: Party) =>
+    h.weeklyHours +
+    weekHoursOf([...(weekBooked.get(h.id) ?? []), { date: p.date, start: p.start, end: p.end, kids: p.kids }]);
 
   // Distinct days each host was available, for the per-available-day fairness share.
   const offerDates = new Map<string, Set<string>>();
@@ -147,10 +157,7 @@ export function assignWeek(
     if (p.fixed) {
       if (p.assignedHost && hostById.has(p.assignedHost)) {
         result.assignments.push({ partyId: p.id, hostId: p.assignedHost });
-        const fixedHost = hostById.get(p.assignedHost);
-        if (fixedHost) {
-          weekHours.set(p.assignedHost, (weekHours.get(p.assignedHost) ?? 0) + partyHoursFor(ledger.get(p.assignedHost) ?? [], p));
-        }
+        weekBooked.get(p.assignedHost)?.push({ date: p.date, start: p.start, end: p.end, kids: p.kids });
         record(p.assignedHost, { date: p.date, start: p.start, end: p.end, kids: p.kids });
         weekCount.set(p.assignedHost, (weekCount.get(p.assignedHost) ?? 0) + 1);
       } else {
@@ -172,7 +179,7 @@ export function assignWeek(
     : 0;
 
   for (const p of ordered) {
-    const candidates = hosts.filter((h) => eligible(h, p, ledger, settings, hoursNowFor(h)));
+    const candidates = hosts.filter((h) => eligible(h, p, ledger, settings, hoursAfterFor(h, p)));
     if (candidates.length === 0) {
       result.unassigned.push({ partyId: p.id, reason: 'no_eligible_host' });
       continue;
@@ -235,7 +242,7 @@ export function assignWeek(
 
     const chosen = scored[0].host;
     result.assignments.push({ partyId: p.id, hostId: chosen.id });
-    weekHours.set(chosen.id, (weekHours.get(chosen.id) ?? 0) + partyHoursFor(ledger.get(chosen.id) ?? [], p));
+    weekBooked.get(chosen.id)?.push({ date: p.date, start: p.start, end: p.end, kids: p.kids });
     record(chosen.id, { date: p.date, start: p.start, end: p.end, kids: p.kids });
     weekCount.set(chosen.id, (weekCount.get(chosen.id) ?? 0) + 1);
   }
