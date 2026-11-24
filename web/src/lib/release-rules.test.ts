@@ -5,7 +5,7 @@ const D = '2026-11-30';
 const open = [{ date: D, start: '12:00', end: '23:00' }];
 
 function cand(id: string, name: string, over: Partial<ReplacementCandidate> = {}): ReplacementCandidate {
-  return { id, name, dailyCap: 3, shifts: [], booked: [], availability: open, ...over };
+  return { id, name, shifts: [], booked: [], availability: open, ...over };
 }
 
 const party = { id: 99, date: D, start: '18:00', end: '20:00' };
@@ -28,12 +28,12 @@ describe('pickReplacement', () => {
     expect(r).toBeNull();
   });
 
-  it('skips a hostess at her daily cap', () => {
+  it('has no daily limit: a hostess with other parties that day can still take one that fits', () => {
     const booked = [
       { partyId: 1, date: D, start: '10:00', end: '11:00' },
       { partyId: 2, date: D, start: '12:00', end: '13:00' },
     ];
-    expect(pickReplacement(party, 'me', [cand('a', 'Ana', { dailyCap: 2, booked })])).toBeNull();
+    expect(pickReplacement(party, 'me', [cand('a', 'Ana', { booked })])).toEqual({ hostId: 'a', name: 'Ana' });
   });
 
   it('skips a hostess who would conflict with a server shift', () => {

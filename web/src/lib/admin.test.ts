@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { BULK_MAX, validateBulkProfileChanges, validateProfileChange, validateSetting } from './admin';
 
-const base = { role: 'staff', status: 'active', tier: '1', dailyCap: '3', actorId: 'a', targetId: 'b' };
+const base = { role: 'staff', status: 'active', tier: '1', actorId: 'a', targetId: 'b' };
 
 describe('validateProfileChange', () => {
   it('accepts a normal change and returns numbers', () => {
     const r = validateProfileChange(base);
-    expect(r).toEqual({ ok: true, value: { role: 'staff', status: 'active', tier: 1, dailyCap: 3 } });
+    expect(r).toEqual({ ok: true, value: { role: 'staff', status: 'active', tier: 1 } });
   });
 
   it('accepts the read-only viewer role', () => {
@@ -29,11 +29,6 @@ describe('validateProfileChange', () => {
     expect(validateProfileChange({ ...base, tier: '1.5' }).ok).toBe(false);
   });
 
-  it('rejects a daily cap above 3, the hard rule', () => {
-    expect(validateProfileChange({ ...base, dailyCap: '4' }).ok).toBe(false);
-    expect(validateProfileChange({ ...base, dailyCap: '-1' }).ok).toBe(false);
-  });
-
   it('rejects unknown roles and statuses', () => {
     expect(validateProfileChange({ ...base, role: 'owner' }).ok).toBe(false);
     expect(validateProfileChange({ ...base, status: 'deleted' }).ok).toBe(false);
@@ -50,7 +45,7 @@ describe('validateProfileChange', () => {
 describe('validateBulkProfileChanges', () => {
   const A = '11111111-1111-4111-8111-111111111111';
   const B = '22222222-2222-4222-8222-222222222222';
-  const row = { id: A, role: 'manager', status: 'active', tier: '', dailyCap: '0' };
+  const row = { id: A, role: 'manager', status: 'active', tier: '' };
 
   it('accepts several valid rows', () => {
     const r = validateBulkProfileChanges([row, { ...row, id: B, role: 'viewer' }], 'admin');

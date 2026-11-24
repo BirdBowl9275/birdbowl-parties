@@ -21,7 +21,6 @@ export type Host = {
   id: string;
   name: string;
   tier: Tier;
-  dailyCap: number; // 0 to 3
   availability: Window[];
 };
 
@@ -80,10 +79,7 @@ function eligible(host: Host, party: Party, ledger: Map<string, Entry[]>, s: Eng
   const entries = ledger.get(host.id) ?? [];
   const sameDay = entries.filter((e) => e.date === party.date);
 
-  // Maximum three parties per host per day, and never above the host's own daily cap.
-  if (sameDay.length >= Math.min(host.dailyCap, 3)) return false;
-
-  // No overlapping time slots for the same host.
+  // No overlapping time slots for the same host. There is no daily party limit.
   if (sameDay.some((e) => party.start < e.end && e.start < party.end)) return false;
 
   // Only people marked available for the whole party on that day.

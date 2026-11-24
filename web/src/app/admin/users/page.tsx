@@ -46,7 +46,7 @@ export default async function AdminUsersPage({
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, phone, status, role, tier, daily_cap, invited_by')
+    .select('id, full_name, email, phone, status, role, tier, invited_by')
     .order('created_at', { ascending: true });
 
   const raw = (data ?? []) as UserRowData[];

@@ -13,7 +13,6 @@ export type UserRowData = {
   status: string;
   role: string;
   tier: number | null;
-  daily_cap: number;
   invited_by?: string | null;
   // Display only: the inviter's name, looked up on the page (security review WEB-INV-01).
   inviter_name?: string | null;
@@ -81,9 +80,8 @@ export function UserRow({
       status: row.status,
       role: row.role,
       tier: row.tier === null ? '' : String(row.tier),
-      daily_cap: String(row.daily_cap),
     }),
-    [row.status, row.role, row.tier, row.daily_cap],
+    [row.status, row.role, row.tier],
   );
   function checkDirty() {
     const form = formRef.current;
@@ -207,14 +205,6 @@ export function UserRow({
           <option value="1">1: Party hostess</option>
           <option value="2">2: Front desk</option>
           <option value="3">3: Server</option>
-        </select>
-      </div>
-      <div className="ucell ucell-cap">
-        <label htmlFor={`${textId}-cap`}>Daily cap</label>
-        <select id={`${textId}-cap`} name="daily_cap" defaultValue={String(row.daily_cap)}>
-          {[0, 1, 2, 3].map((n) => (
-            <option key={n} value={n}>{n}</option>
-          ))}
         </select>
       </div>
       <div className="ucell-save">

@@ -6,7 +6,7 @@ const settings: EngineSettings = { windowDays: 30, hostessAllowancePct: 25, bowl
 const openDay = [{ date: DAY, start: '10:00', end: '22:00' }];
 
 function host(id: string, tier: Host['tier'], overrides: Partial<Host> = {}): Host {
-  return { id, name: id, tier, dailyCap: 3, availability: openDay, ...overrides };
+  return { id, name: id, tier, availability: openDay, ...overrides };
 }
 
 function party(id: string, overrides: Partial<Party> = {}): Party {
@@ -65,20 +65,13 @@ describe('hard rules', () => {
     expect(r.unassigned.map((u) => u.partyId)).toEqual(['b']);
   });
 
-  it('never gives a host more than three parties in one day', () => {
+  it('gives one host every party that fits her day, with no daily limit', () => {
     const parties = ['a', 'b', 'c', 'd'].map((id, i) =>
       party(id, { start: `${10 + i * 2}:00`, end: `${11 + i * 2}:00` }),
     );
-    const r = assignWeek(parties, [host('solo', 1, { dailyCap: 3 })], [], settings);
-    expect(r.assignments).toHaveLength(3);
-    expect(r.unassigned).toHaveLength(1);
-  });
-
-  it('respects a lower daily cap set by the admin', () => {
-    const parties = [party('a', { start: '10:00', end: '11:00' }), party('b', { start: '12:00', end: '13:00' })];
-    const r = assignWeek(parties, [host('solo', 1, { dailyCap: 1 })], [], settings);
-    expect(r.assignments).toHaveLength(1);
-    expect(r.unassigned).toHaveLength(1);
+    const r = assignWeek(parties, [host('solo', 1)], [], settings);
+    expect(r.assignments).toHaveLength(4);
+    expect(r.unassigned).toHaveLength(0);
   });
 
   it('assigns only hosts whose availability covers the whole party', () => {
@@ -130,8 +123,12 @@ describe('party count spread', () => {
 
 describe('party size and order', () => {
   it('assigns the biggest party first, so a single party is not left to the last host', () => {
-    const parties = [party('small', { kids: 4 }), party('big', { kids: 20, start: '14:00', end: '15:00' })];
-    const r = assignWeek(parties, [host('solo', 1, { dailyCap: 1 })], [], settings);
+    // Same time slot, so the host can take only one of them.
+    const parties = [
+      party('small', { kids: 4, start: '14:00', end: '15:00' }),
+      party('big', { kids: 20, start: '14:00', end: '15:00' }),
+    ];
+    const r = assignWeek(parties, [host('solo', 1)], [], settings);
     expect(hostOf(r, 'big')).toBe('solo');
     expect(r.unassigned.map((u) => u.partyId)).toEqual(['small']);
   });

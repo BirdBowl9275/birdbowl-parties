@@ -51,7 +51,7 @@ export async function releaseParty(formData: FormData) {
   const sunday = addDays(monday, 6);
 
   const [hostsRes, shiftsRes, bookedRes, availRes] = await Promise.all([
-    admin.from('profiles').select('id, full_name, daily_cap').eq('status', 'active').eq('tier', 1),
+    admin.from('profiles').select('id, full_name').eq('status', 'active').eq('tier', 1),
     admin
       .from('staff_shifts')
       .select('profile_id, tier, shift_date, start_time, end_time, end_next_day')
@@ -105,7 +105,6 @@ export async function releaseParty(formData: FormData) {
   const candidates: ReplacementCandidate[] = (hostsRes.data ?? []).map((h) => ({
     id: h.id as string,
     name: (h.full_name as string) || 'Unnamed host',
-    dailyCap: Number(h.daily_cap ?? 3),
     shifts: shiftsBy.get(h.id as string) ?? [],
     booked: bookedBy.get(h.id as string) ?? [],
     availability: availBy.get(h.id as string) ?? [],
