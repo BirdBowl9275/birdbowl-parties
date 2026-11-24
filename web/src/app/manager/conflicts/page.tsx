@@ -35,7 +35,7 @@ export default async function ConflictReportPage({
     supabase.from('profiles').select('id, full_name').eq('status', 'active').eq('tier', 1).order('full_name'),
     supabase
       .from('staff_shifts')
-      .select('profile_id, staff_name, tier, shift_date, start_time, end_time')
+      .select('profile_id, staff_name, tier, shift_date, start_time, end_time, end_next_day')
       .eq('week_start', monday),
   ]);
 
@@ -54,6 +54,7 @@ export default async function ConflictReportPage({
     date: s.shift_date as string,
     start: clock(s.start_time as string),
     end: clock(s.end_time as string),
+    endNextDay: Boolean(s.end_next_day),
   }));
 
   const report = buildConflictReport({

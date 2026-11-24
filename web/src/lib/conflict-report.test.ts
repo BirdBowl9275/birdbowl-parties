@@ -77,3 +77,30 @@ describe('buildConflictReport', () => {
     expect(forTwo.arrival).toBe('12:00');
   });
 });
+
+describe('overnight shifts in the conflict report', () => {
+  it('counts a server shift that ends after midnight, so an overlapping party is a conflict', () => {
+    // Server shift 5 PM to 2 AM (next day) overlaps a 6 PM to 8 PM party.
+    const report = buildConflictReport({
+      parties: [party(1, '18:00', '20:00')],
+      hosts: [{ id: 'a', name: 'Ana' }],
+      shifts: [{ profileId: 'a', staffName: 'Ana', tier: 3, date: D, start: '17:00', end: '02:00', endNextDay: true }],
+      assignments: [],
+    });
+    const cand = report.parties[0].candidates[0];
+    expect(cand.eligible).toBe(false);
+    expect(cand.reasons.join(' ')).toMatch(/server/);
+  });
+
+  it('does not flag the same party when the shift has no overnight end', () => {
+    // Without endNextDay, the 17:00 to 02:00 shift reads as ending before the party, so there is no clash.
+    // This is the old, wrong behaviour; the test pins that the flag is what makes the difference.
+    const report = buildConflictReport({
+      parties: [party(1, '18:00', '20:00')],
+      hosts: [{ id: 'a', name: 'Ana' }],
+      shifts: [{ profileId: 'a', staffName: 'Ana', tier: 3, date: D, start: '17:00', end: '02:00' }],
+      assignments: [],
+    });
+    expect(report.parties[0].candidates[0].reasons.join(' ')).not.toMatch(/server/);
+  });
+});
