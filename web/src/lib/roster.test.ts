@@ -33,6 +33,69 @@ describe('parseClock and parseDate', () => {
   });
 });
 
+describe('parseRoster, wide weekly export', () => {
+  const WIDE_HEADER =
+    'Employee,Phone,Mon Shift,Mon Schedule,Mon Job,Mon Meal,Mon Break,Tue Shift,Tue Schedule,Tue Job,Tue Meal,Tue Break';
+
+  it('reads each day from its own columns, with dates from the week start', () => {
+    const r = parseRoster(
+      [
+        WIDE_HEADER,
+        'Ana Test,PLACEHOLDER,5:00 PM - 11:00 PM,Game Room,Game Room,-,-,-,-,-,-,-',
+        'Bo Test,PLACEHOLDER,-,-,-,-,-,10:00 AM - 5:00 PM,Front Desk,Shoes,-,-',
+      ].join('\n'),
+      '2026-11-23',
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.rows).toEqual([
+      { staffName: 'Ana Test', tier: 1, date: '2026-11-23', start: '17:00', end: '23:00', endNextDay: false, weekStart: '2026-11-23' },
+      { staffName: 'Bo Test', tier: 2, date: '2026-11-24', start: '10:00', end: '17:00', endNextDay: false, weekStart: '2026-11-23' },
+    ]);
+  });
+
+  it('never reads the phone column in the wide layout', () => {
+    const r = parseRoster(
+      [WIDE_HEADER, 'Ana Test,DO NOT USE,5:00 PM - 11:00 PM,Game Room,Game Room,-,-,-,-,-,-,-'].join('\n'),
+      '2026-11-23',
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(JSON.stringify(r.rows)).not.toContain('DO NOT USE');
+  });
+
+  it('maps jobs to tiers and counts jobs that are not used', () => {
+    const r = parseRoster(
+      [
+        WIDE_HEADER,
+        'Cy Test,x,4:00 PM - 11:00 PM,Lane Service,Server,-,-,-,-,-,-,-',
+        'Dee Test,x,4:00 PM - 11:00 PM,Restaurant,Expo,-,-,-,-,-,-,-',
+        'Eli Test,x,4:00 PM - 11:00 PM,Bar,Bar Back,-,-,-,-,-,-,-',
+      ].join('\n'),
+      '2026-11-23',
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.rows.map((x) => [x.staffName, x.tier])).toEqual([['Cy Test', 3]]);
+    expect(r.skippedJobs).toBe(2);
+  });
+
+  it('handles a shift that ends after midnight written as 12:00 AM', () => {
+    const r = parseRoster(
+      [WIDE_HEADER, 'Fay Test,x,6:00 PM - 12:00 AM,Game Room,Game Room,-,-,-,-,-,-,-'].join('\n'),
+      '2026-11-23',
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.rows[0]).toMatchObject({ start: '18:00', end: '00:00', endNextDay: true });
+  });
+
+  it('needs the week start, because the export has no dates', () => {
+    const r = parseRoster([WIDE_HEADER, 'Ana Test,x,5:00 PM - 11:00 PM,Game Room,Game Room,-,-,-,-,-,-,-'].join('\n'));
+    expect(r).toEqual({ ok: false, error: 'missing_week_start' });
+  });
+});
+
 describe('parseRoster', () => {
   it('maps jobs to tiers and skips other jobs', () => {
     const r = parseRoster(
