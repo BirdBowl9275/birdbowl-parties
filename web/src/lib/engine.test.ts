@@ -6,7 +6,7 @@ const settings: EngineSettings = { windowDays: 30, hostessAllowancePct: 25, bowl
 const openDay = [{ date: DAY, start: '10:00', end: '22:00' }];
 
 function host(id: string, tier: Host['tier'], overrides: Partial<Host> = {}): Host {
-  return { id, name: id, tier, availability: openDay, ...overrides };
+  return { id, name: id, tier, weeklyHours: 0, availability: openDay, ...overrides };
 }
 
 function party(id: string, overrides: Partial<Party> = {}): Party {
@@ -26,6 +26,45 @@ function party(id: string, overrides: Partial<Party> = {}): Party {
 function hostOf(result: ReturnType<typeof assignWeek>, partyId: string): string | undefined {
   return result.assignments.find((a) => a.partyId === partyId)?.hostId;
 }
+
+describe('weekly hours: priority and the 38-hour limit', () => {
+  it('offers the party to the hostess with fewer hours, even if she has more parties this week', () => {
+    // A has no parties but 20 hours. B has one party (7 hours with it) and 5 hours from shifts.
+    // Fewest hours first, so B gets the new party.
+    const parties = [
+      party('fixed', { start: '10:00', end: '11:00', fixed: true, assignedHost: 'b' }),
+      party('new', { start: '14:00', end: '15:00' }),
+    ];
+    const r = assignWeek(parties, [host('a', 1, { weeklyHours: 20 }), host('b', 1, { weeklyHours: 5 })], [], settings);
+    expect(hostOf(r, 'new')).toBe('b');
+  });
+
+  it('never gives a party that would take a hostess over 38 hours', () => {
+    // A is at 37 hours. The party adds 2 (1 hour arrival plus the 1-hour party), so she would reach 39.
+    const parties = [party('new', { start: '14:00', end: '15:00' })];
+    const r = assignWeek(parties, [host('a', 1, { weeklyHours: 37 }), host('b', 1, { weeklyHours: 0 })], [], settings);
+    expect(hostOf(r, 'new')).toBe('b');
+  });
+
+  it('counts the first-party arrival hour once a day, even when the earlier party is added last', () => {
+    // A is at 35 hours and already holds a 16:00-17:00 party. Adding 10:00-11:00 earlier that day
+    // makes it her first party, so the day's arrival hour is counted once: 35 + 1 + 1 + 1 = 38.
+    // Counting it twice would reach 39 and wrongly rule her out.
+    const parties = [
+      party('late', { start: '16:00', end: '17:00', fixed: true, assignedHost: 'a' }),
+      party('early', { start: '10:00', end: '11:00' }),
+    ];
+    const r = assignWeek(parties, [host('a', 1, { weeklyHours: 35 })], [], settings);
+    expect(hostOf(r, 'early')).toBe('a');
+  });
+
+  it('still offers a party to a hostess between 32 and 38 hours when no one else can take it', () => {
+    // A is at 33 hours. The party adds 2, so she reaches 35, which is within the 38-hour limit.
+    const parties = [party('new', { start: '14:00', end: '15:00' })];
+    const r = assignWeek(parties, [host('a', 1, { weeklyHours: 33 })], [], settings);
+    expect(hostOf(r, 'new')).toBe('a');
+  });
+});
 
 describe('hard rules', () => {
   it('sends bowling parties starting after 6 p.m. to servers only, even when hostesses are free', () => {

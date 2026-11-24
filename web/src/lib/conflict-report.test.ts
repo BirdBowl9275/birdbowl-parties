@@ -11,7 +11,7 @@ describe('buildConflictReport', () => {
       hosts: [
         { id: 'a', name: 'Ana' }, // 29 h, under 32, room 3
         { id: 'b', name: 'Bo' },  // 10 h, under 32, room 22: first
-        { id: 'c', name: 'Cy' },  // 35 h, at the cap, so ineligible for a 2-hour party
+        { id: 'c', name: 'Cy' },  // 35 h, not under 32, so ranked after Ana and Bo
       ],
       shifts: [
         { profileId: 'a', staffName: 'Ana', tier: 1, date: '2026-11-23', start: '08:00', end: '14:00' }, // 6 h

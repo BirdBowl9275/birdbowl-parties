@@ -2,7 +2,7 @@
 // The database and RLS protect the data. These rules decide who may be offered a party.
 //
 // Rules (from the 2026-11-23 requirements):
-//  - A hostess's weekly hours may never exceed MAX_WEEKLY_HOURS (35).
+//  - A hostess's weekly hours may never exceed MAX_WEEKLY_HOURS (38).
 //  - Staff under PRIORITY_BELOW_HOURS (32) are considered first. Among them, the one with the most
 //    room under 32 goes first. Staff at 32 or more come after, lowest hours first.
 //  - A hostess arrives ARRIVAL_LEAD_MIN (60) minutes before her first party of the day.
@@ -11,7 +11,7 @@
 //  - A hostess is eligible for another party only if the next arrival is at least
 //    GAP_AFTER_PARTY_MIN (30) minutes after the previous party ends, in either order.
 
-export const MAX_WEEKLY_HOURS = 35;
+export const MAX_WEEKLY_HOURS = 38;
 export const PRIORITY_BELOW_HOURS = 32;
 export const ARRIVAL_LEAD_MIN = 60;
 export const GAP_AFTER_PARTY_MIN = 30;
@@ -121,7 +121,7 @@ export function checkEligibility(candidate: Candidate, party: PartyRequest): Eli
   return { eligible: reasons.length === 0, arrival, hoursAfter, reasons };
 }
 
-// Order for offers: under 32 first (most room first), then 32 to 35 (lowest hours first).
+// Order for offers: under 32 first (most room first), then 32 to 38 (lowest hours first).
 export function priorityCompare(a: { hours: number }, b: { hours: number }): number {
   const aUnder = a.hours < PRIORITY_BELOW_HOURS;
   const bUnder = b.hours < PRIORITY_BELOW_HOURS;

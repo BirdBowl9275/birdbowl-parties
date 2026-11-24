@@ -81,7 +81,7 @@ export default async function ConflictReportPage({
       </nav>
 
       <h2>Hours this week</h2>
-      <p className="muted">Lowest first. The cap is 35 hours; staff under 32 are offered first.</p>
+      <p className="muted">Lowest first. The cap is 38 hours; staff under 32 are offered first.</p>
       <div className="table-wrap">
         <table className="fairness">
           <thead>

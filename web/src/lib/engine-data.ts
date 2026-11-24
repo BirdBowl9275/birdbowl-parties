@@ -4,6 +4,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { EngineSettings, Host, HistoryParty, Offer, Party, Tier } from './engine';
 import { addDays } from './parties';
+import { weeklyHours, type ShiftRow } from './schedule-rules';
 
 export type WeekInput = {
   parties: Party[];
@@ -48,7 +49,7 @@ export async function loadWeekInput(
     bowlingServerAfter: String(s.get('bowling_server_only_after') ?? '18:00').replace(/"/g, ''),
   };
 
-  const [partiesRes, hostsRes, availRes, histRes] = await Promise.all([
+  const [partiesRes, hostsRes, shiftsRes, availRes, histRes] = await Promise.all([
     supabase
       .from('parties')
       .select('id, party_date, start_time, end_time, kids_count, party_type, assigned_host, assignment_locked')
@@ -56,6 +57,11 @@ export async function loadWeekInput(
       .gte('party_date', monday)
       .lte('party_date', sunday),
     supabase.from('profiles').select('id, full_name, tier').eq('status', 'active').not('tier', 'is', null),
+    // HotSchedules shifts for this week (all roles). Only the hours are used here.
+    supabase
+      .from('staff_shifts')
+      .select('profile_id, tier, shift_date, start_time, end_time, end_next_day')
+      .eq('week_start', monday),
     // Availability for the target week and every earlier week that reaches into the fairness window.
     supabase
       .from('availability')
@@ -85,11 +91,27 @@ export async function loadWeekInput(
     };
   });
 
+  // This week's shift hours per profile, from the HotSchedules rows.
+  const shiftsBy = new Map<string, ShiftRow[]>();
+  for (const s of shiftsRes.data ?? []) {
+    if (!s.profile_id) continue;
+    const list = shiftsBy.get(s.profile_id as string) ?? [];
+    list.push({
+      tier: s.tier as 1 | 2 | 3,
+      date: s.shift_date as string,
+      start: clock(s.start_time as string),
+      end: clock(s.end_time as string),
+      endNextDay: Boolean(s.end_next_day),
+    });
+    shiftsBy.set(s.profile_id as string, list);
+  }
+
   const hosts = (hostsRes.data ?? []).map((h) => ({
     id: h.id as string,
     fullName: (h.full_name as string) || 'Unnamed host',
     name: (h.full_name as string) || (h.id as string),
     tier: h.tier as Tier,
+    weeklyHours: weeklyHours(shiftsBy.get(h.id as string) ?? []),
     availability: [] as { date: string; start: string; end: string }[],
   }));
   const byId = new Map(hosts.map((h) => [h.id, h]));

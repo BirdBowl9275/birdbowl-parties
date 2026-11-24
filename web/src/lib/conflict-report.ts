@@ -116,7 +116,7 @@ export function buildConflictReport(input: {
       };
     });
 
-    // Eligible first, then the priority order (under 32 with most room, then 32 to 35).
+    // Eligible first, then the priority order (under 32 with most room, then 32 to 38).
     candidates.sort(
       (a, b) =>
         Number(b.eligible) - Number(a.eligible) ||
