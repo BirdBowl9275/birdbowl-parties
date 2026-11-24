@@ -40,6 +40,9 @@ export type Party = {
   // reveal that has already happened makes a party fixed.
   fixed: boolean;
   assignedHost: string | null;
+  // An unlocked party that already has a host keeps that host, while the host is still eligible.
+  // The run only fills parties that have no host. Set by the loader; false when not given.
+  keepHost?: boolean;
 };
 
 // Parties outside this run that already have a host (for the fairness window).
@@ -154,7 +157,9 @@ export function assignWeek(
   const open: Party[] = [];
 
   for (const p of parties) {
-    if (p.fixed) {
+    // A kept host is treated like a fixed one: it is counted toward load, and the party is not re-picked.
+    const keptHost = p.keepHost === true && p.assignedHost !== null && hostById.has(p.assignedHost);
+    if (p.fixed || keptHost) {
       if (p.assignedHost && hostById.has(p.assignedHost)) {
         result.assignments.push({ partyId: p.id, hostId: p.assignedHost });
         weekBooked.get(p.assignedHost)?.push({ date: p.date, start: p.start, end: p.end, kids: p.kids });

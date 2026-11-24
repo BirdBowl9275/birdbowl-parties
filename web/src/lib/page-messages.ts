@@ -37,6 +37,18 @@ export const SCHEDULE_MESSAGES = {
   lock_needs_host: { tone: 'error', text: 'Pick a host before locking a party.' },
   assignment_failed: { tone: 'error', text: 'Could not save that assignment.' },
   confirm_preview: { tone: 'error', text: 'Tick the box to confirm you reviewed the preview.' },
+  shift_conflict: {
+    tone: 'error',
+    text: 'This hostess is on the uploaded schedule at that time. Tick "Override schedule conflict" to assign her anyway.',
+  },
+  assignment_saved_shift_override: {
+    tone: 'success',
+    text: 'Assignment saved. The schedule conflict was overridden on purpose.',
+  },
+  assignment_saved_unavailable: {
+    tone: 'error',
+    text: 'Assignment saved, but she has no availability marked for that time. Check with her before the party.',
+  },
 } as const satisfies Table;
 
 export type SalesCode = keyof typeof SALES_MESSAGES;
