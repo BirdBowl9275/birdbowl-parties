@@ -9,7 +9,10 @@ export const metadata: Metadata = { title: 'HotSchedules roster' };
 const MESSAGES: Record<string, string> = {
   choose_file: 'Choose a CSV file first.',
   file_too_large: 'That file is too large. Export one week at a time.',
-  missing_columns: 'The file needs these columns: Name, Job, Date, Start and End. The Phone column is not used.',
+  missing_columns: 'The file is missing columns. It needs an Employee or Name column, and either Day Shift and Day Job columns, or Date, Job, Start and End columns. The Phone column is not used.',
+  missing_week_start: 'Enter the Monday that starts the week in the file.',
+  week_not_valid: 'The week start date is not valid.',
+  week_not_monday: 'The week must start on a Monday.',
   too_many_rows: 'The file has too many rows. Export one week at a time.',
   empty_file: 'The file is empty.',
   import_stopped: 'The import stopped partway. Run it again. Importing the same file twice is safe.',
@@ -54,6 +57,10 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       ) : null}
 
       <form action={importRoster} encType="multipart/form-data">
+        <label htmlFor="roster-file">Roster CSV</label>
+        <label htmlFor="roster-week">Week starts on (Monday)</label>
+        <input id="roster-week" name="week_start" type="date" required />
+        <p className="muted">Needed for the weekly export, which has no dates. Use the Monday of the week in the file.</p>
         <label htmlFor="roster-file">Roster CSV</label>
         <input id="roster-file" name="roster" type="file" accept=".csv,text/csv" required />
         <button type="submit">Upload roster</button>

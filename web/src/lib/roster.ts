@@ -24,7 +24,22 @@ export type RosterRow = {
 
 export type RosterParse =
   | { ok: true; rows: RosterRow[]; skippedJobs: number; invalidRows: number }
-  | { ok: false; error: 'empty' | 'missing_columns' | 'too_many_rows'; missing?: string[] };
+  | { ok: false; error: 'empty' | 'missing_columns' | 'too_many_rows' | 'missing_week_start'; missing?: string[] };
+
+const DAY_NAMES = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+// The HotSchedules weekly export is wide: one row per person, and for each day of the week
+// "<Day> Shift" and "<Day> Job" columns (plus Schedule, Meal and Break, which are not used).
+// Returns the column index of each day's Shift and Job, or -1 when not present.
+function dayColumns(header: string[]) {
+  return DAY_NAMES.map((d) => {
+    const find = (suffix: string) => {
+      const re = new RegExp(`^${d}[a-z]*\\s+${suffix}$`, 'i');
+      return header.findIndex((h) => re.test(h.trim()));
+    };
+    return { shift: find('shift'), job: find('job') };
+  });
+}
 
 const JOB_TIER: Record<string, 1 | 2 | 3> = {
   'game room': 1,
@@ -137,11 +152,62 @@ const toMin = (hhmm: string) => {
   return h * 60 + m;
 };
 
-export function parseRoster(text: string): RosterParse {
+// Wide export: each day's shift is read from its own columns. The dates come from weekStart,
+// the Monday the manager gives, because the export has no date column.
+function parseWide(header: string[], body: string[][], weekStart: string): RosterParse {
+  const days = dayColumns(header);
+  const nameCol = findColumns(header).name;
+  if (nameCol < 0) return { ok: false, error: 'missing_columns', missing: ['Employee'] };
+  if (body.length > MAX_ROSTER_ROWS) return { ok: false, error: 'too_many_rows' };
+
+  const rows: RosterRow[] = [];
+  let skippedJobs = 0;
+  let invalidRows = 0;
+
+  for (const r of body) {
+    const cell = (i: number) => (i >= 0 ? (r[i] ?? '').trim() : '');
+    const staffName = cell(nameCol).replace(/\s+/g, ' ');
+    days.forEach((day, i) => {
+      const shift = cell(day.shift);
+      if (shift === '' || shift === '-') return; // no shift that day
+      const tier = JOB_TIER[cell(day.job).toLowerCase()];
+      if (!tier) {
+        skippedJobs++;
+        return;
+      }
+      // "5:00 PM - 11:00 PM"
+      const parts = shift.split(/\s+-\s+/);
+      const start = parts.length === 2 ? parseClock(parts[0]) : null;
+      const end = parts.length === 2 ? parseClock(parts[1]) : null;
+      if (!staffName || !start || !end || start === end) {
+        invalidRows++;
+        return;
+      }
+      const date = addDays(weekStart, i);
+      rows.push({
+        staffName,
+        tier,
+        date,
+        start,
+        end,
+        endNextDay: toMin(end) < toMin(start),
+        weekStart: mondayOf(date),
+      });
+    });
+  }
+
+  return { ok: true, rows, skippedJobs, invalidRows };
+}
+
+export function parseRoster(text: string, weekStart?: string): RosterParse {
   const table = parseCsv(text);
   if (table.length === 0) return { ok: false, error: 'empty' };
 
   const [header, ...body] = table;
+  if (dayColumns(header).some((d) => d.shift >= 0)) {
+    if (!weekStart) return { ok: false, error: 'missing_week_start' };
+    return parseWide(header, body, weekStart);
+  }
   const cols = findColumns(header);
   const missing = [
     cols.name < 0 ? 'Name' : null,

@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { requireManager } from '@/lib/manager-guard';
-import { parseRoster, type RosterRow } from '@/lib/roster';
+import { parseDate, parseRoster, type RosterRow } from '@/lib/roster';
 
 // Largest roster file accepted. A week of shifts is far smaller than this.
 const MAX_BYTES = 1_000_000;
@@ -29,9 +29,16 @@ export async function importRoster(formData: FormData) {
   if (!(file instanceof File) || file.size === 0) back('choose_file');
   if (file.size > MAX_BYTES) back('file_too_large');
 
-  const parsed = parseRoster(await file.text());
+  // The week start is needed for the wide HotSchedules export, which has no dates. It must be a Monday.
+  const weekRaw = String(formData.get('week_start') ?? '').trim();
+  const weekStart = weekRaw ? parseDate(weekRaw) : null;
+  if (weekRaw && !weekStart) back('week_not_valid');
+  if (weekStart && new Date(`${weekStart}T12:00:00Z`).getUTCDay() !== 1) back('week_not_monday');
+
+  const parsed = parseRoster(await file.text(), weekStart ?? undefined);
   if (!parsed.ok) {
     if (parsed.error === 'missing_columns') back('missing_columns');
+    if (parsed.error === 'missing_week_start') back('missing_week_start');
     back(parsed.error === 'too_many_rows' ? 'too_many_rows' : 'empty_file');
   }
 
