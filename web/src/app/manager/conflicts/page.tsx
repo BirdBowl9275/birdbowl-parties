@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireManager } from '@/lib/manager-guard';
 import { addDays, todayBusiness, validWeekStart } from '@/lib/parties';
 import { buildConflictReport, type ReportShift } from '@/lib/conflict-report';
+import { formatClock } from '@/lib/fairness';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,7 +126,7 @@ export default async function ConflictReportPage({
         report.parties.map(({ party, candidates }) => (
           <div key={party.id}>
             <h2>
-              {party.date} · {party.start}–{party.end}
+              {party.date} · {formatClock(party.start)}–{formatClock(party.end)}
             </h2>
             <div className="table-wrap">
               <table className="fairness">

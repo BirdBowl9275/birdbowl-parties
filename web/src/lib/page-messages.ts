@@ -21,7 +21,7 @@ export const SALES_MESSAGES = {
   },
   // Form checks (lib/parties.ts validateParty).
   bad_date: { tone: 'error', text: 'Pick a valid date.' },
-  bad_times: { tone: 'error', text: 'Times must look like 14:00.' },
+  bad_times: { tone: 'error', text: 'Pick a start and end time, like 2:00 p.m.' },
   end_before_start: { tone: 'error', text: 'End time must be after the start time.' },
   bad_kids: { tone: 'error', text: 'Kids must be a whole number from 0 to 200.' },
   bad_type: { tone: 'error', text: 'Pick Bowling or Arcade.' },

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DAY_NAMES } from '@/lib/availability';
 import { addDays, todayBusiness, validWeekStart } from '@/lib/parties';
+import { formatClock } from '@/lib/fairness';
 import { saveAvailability } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +50,7 @@ export default async function AvailabilityPage({
   const cutoffTime = String(settings.get('availability_cutoff_time') ?? '20:00').replace(/"/g, '');
   // Same rule as the database: the cutoff day falls in the week before this one.
   const cutoffDay = addDays(monday, cutoffDow - 1 - 7);
-  const cutoffLabel = `${longDate(cutoffDay)} at ${cutoffTime} Eastern`;
+  const cutoffLabel = `${longDate(cutoffDay)} at ${formatClock(cutoffTime)} Eastern`;
 
   const locked = lockRes.error ? false : lockRes.data === true;
   const mine = new Map(

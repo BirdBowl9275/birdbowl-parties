@@ -9,6 +9,8 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Settings' };
 
 const INTEGER_KEYS = new Set(['fairness_window_days', 'hostess_avg_allowance_pct', 'availability_cutoff_dow']);
+// Shown with the browser's time picker (a.m./p.m.). Stored and checked as HH:MM, as before.
+const TIME_KEYS = new Set(['availability_cutoff_time', 'reveal_time', 'bowling_server_only_after']);
 
 type Def = { key: string; label: string; unit: string; help: string };
 type Group = { id: string; title: string; blurb: string; items: Def[] };
@@ -48,8 +50,8 @@ const GROUPS: Group[] = [
       {
         key: 'availability_cutoff_time',
         label: 'Availability cutoff time',
-        unit: '24-hour',
-        help: 'Time of day on the cutoff day, 24-hour, like 08:00 or 18:30.',
+        unit: 'a.m. or p.m.',
+        help: 'Time of day on the cutoff day, like 8:00 a.m. or 6:30 p.m.',
       },
     ],
   },
@@ -61,14 +63,14 @@ const GROUPS: Group[] = [
       {
         key: 'reveal_time',
         label: 'Morning reveal time',
-        unit: '24-hour',
-        help: 'Staff see party details from this time on the day of the party, like 08:00.',
+        unit: 'a.m. or p.m.',
+        help: 'Staff see party details from this time on the day of the party, like 8:00 a.m.',
       },
       {
         key: 'bowling_server_only_after',
         label: 'Bowling parties after this time go to servers',
-        unit: '24-hour',
-        help: 'Bowling parties that start after this time go to servers only. 24-hour, like 18:00.',
+        unit: 'a.m. or p.m.',
+        help: 'Bowling parties that start after this time go to servers only, like 6:00 p.m.',
       },
     ],
   },
@@ -117,8 +119,8 @@ export default async function AdminSettingsPage({
                   <input
                     id={`s-${d.key}`}
                     name="value"
-                    type="text"
-                    defaultValue={String(values.get(d.key))}
+                    type={TIME_KEYS.has(d.key) ? 'time' : 'text'}
+                    defaultValue={String(values.get(d.key)).replace(/"/g, '')}
                     required
                     inputMode={INTEGER_KEYS.has(d.key) ? 'numeric' : undefined}
                     aria-describedby={`h-${d.key} u-${d.key}`}
