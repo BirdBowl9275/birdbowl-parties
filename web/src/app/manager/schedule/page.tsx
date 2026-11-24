@@ -50,7 +50,7 @@ function weekLabel(first: string, last: string): string {
   return `${start} \u2013 ${end}, ${year}`;
 }
 
-type HostRow = { id: string; full_name: string; tier: number; daily_cap: number };
+type HostRow = { id: string; full_name: string; tier: number };
 
 export default async function ManagerSchedulePage({
   searchParams,
@@ -97,7 +97,7 @@ export default async function ManagerSchedulePage({
       ? supabase.rpc('schedule_hosts')
       : supabase
           .from('profiles')
-          .select('id, full_name, tier, daily_cap')
+          .select('id, full_name, tier')
           .eq('status', 'active')
           .not('tier', 'is', null)
           .order('full_name'),

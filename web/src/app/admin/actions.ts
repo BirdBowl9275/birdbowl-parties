@@ -34,7 +34,6 @@ export async function updateProfile(formData: FormData) {
     role: field(formData, 'role'),
     status: field(formData, 'status'),
     tier: field(formData, 'tier'),
-    dailyCap: field(formData, 'daily_cap'),
     actorId: user.id,
     targetId,
   });
@@ -60,7 +59,7 @@ async function saveProfile(
   // RLS allows this only for admins. The guard trigger also checks it in the database.
   const { data, error } = await supabase
     .from('profiles')
-    .update({ role: v.role, status: v.status, tier: v.tier, daily_cap: v.dailyCap })
+    .update({ role: v.role, status: v.status, tier: v.tier })
     .eq('id', v.id)
     .select('id');
   if (error) return 'error';
@@ -87,9 +86,8 @@ export async function updateProfiles(formData: FormData) {
   const roles = formData.getAll('role');
   const statuses = formData.getAll('status');
   const tiers = formData.getAll('tier');
-  const caps = formData.getAll('daily_cap');
   const n = ids.length;
-  if ([roles, statuses, tiers, caps].some((list) => list.length !== n)) back(path, 'bulk_retry', true);
+  if ([roles, statuses, tiers].some((list) => list.length !== n)) back(path, 'bulk_retry', true);
   if (n > BULK_MAX) back(path, 'too_many', true);
 
   const str = (x: FormDataEntryValue) => (typeof x === 'string' ? x : '');
@@ -99,7 +97,6 @@ export async function updateProfiles(formData: FormData) {
       role: str(roles[i]),
       status: str(statuses[i]),
       tier: str(tiers[i]),
-      dailyCap: str(caps[i]),
     })),
     user.id,
   );

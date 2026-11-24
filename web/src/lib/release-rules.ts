@@ -19,7 +19,6 @@ export type AvailWindow = { date: string; start: string; end: string };
 export type ReplacementCandidate = {
   id: string;
   name: string;
-  dailyCap: number;
   shifts: ShiftRow[];
   booked: Booked[];
   availability: AvailWindow[];
@@ -58,10 +57,6 @@ export function pickReplacement(
   for (const c of candidates) {
     if (c.id === releaserId) continue;
     const others = c.booked.filter((b) => b.partyId !== party.id);
-
-    // Daily cap: this party plus her other parties that day must not exceed her cap.
-    const sameDayCount = others.filter((b) => b.date === party.date).length + 1;
-    if (sameDayCount > c.dailyCap) continue;
 
     const isFirstOfDay = others.filter((b) => b.date === party.date).every((b) => mins(party.start) <= mins(b.start));
     const result = checkEligibility(

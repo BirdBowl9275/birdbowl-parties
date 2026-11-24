@@ -12,7 +12,6 @@ export type ProfileChange = {
   role: string;
   status: string;
   tier: string; // '' means not a host
-  dailyCap: string;
   actorId: string;
   targetId: string;
 };
@@ -23,7 +22,6 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
   role: Role;
   status: Status;
   tier: number | null;
-  dailyCap: number;
 }> {
   if (!(ROLES as readonly string[]).includes(input.role)) {
     return { ok: false, error: 'bad_role' };
@@ -45,11 +43,6 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
     return { ok: false, error: 'viewer_tier' };
   }
 
-  const cap = Number(input.dailyCap);
-  if (!Number.isInteger(cap) || cap < 0 || cap > 3) {
-    return { ok: false, error: 'bad_cap' };
-  }
-
   // Admins cannot remove or demote themselves, so they can't lock out the last admin by accident.
   // Compare case-insensitively: Postgres matches a UUID in any case (security verifier WEB-BULK-06).
   if (input.actorId.toLowerCase() === input.targetId.toLowerCase()) {
@@ -60,7 +53,7 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
 
   return {
     ok: true,
-    value: { role: input.role as Role, status: input.status as Status, tier, dailyCap: cap },
+    value: { role: input.role as Role, status: input.status as Status, tier },
   };
 }
 
@@ -70,8 +63,8 @@ export function validateProfileChange(input: ProfileChange): ValidationResult<{
 export const BULK_MAX = 100;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export type BulkEntry = { id: string; role: string; status: string; tier: string; dailyCap: string };
-export type ValidProfileChange = { id: string; role: Role; status: Status; tier: number | null; dailyCap: number };
+export type BulkEntry = { id: string; role: string; status: string; tier: string };
+export type ValidProfileChange = { id: string; role: Role; status: Status; tier: number | null };
 
 export function validateBulkProfileChanges(
   entries: BulkEntry[],

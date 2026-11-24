@@ -18,7 +18,7 @@ export function useUsersEditor() {
   return useContext(EditorContext);
 }
 
-const FIELDS = ['id', 'role', 'status', 'tier', 'daily_cap'] as const;
+const FIELDS = ['id', 'role', 'status', 'tier'] as const;
 
 export function UsersEditor({
   action,

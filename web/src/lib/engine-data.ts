@@ -55,7 +55,7 @@ export async function loadWeekInput(
       .eq('status', 'active')
       .gte('party_date', monday)
       .lte('party_date', sunday),
-    supabase.from('profiles').select('id, full_name, tier, daily_cap').eq('status', 'active').not('tier', 'is', null),
+    supabase.from('profiles').select('id, full_name, tier').eq('status', 'active').not('tier', 'is', null),
     // Availability for the target week and every earlier week that reaches into the fairness window.
     supabase
       .from('availability')
@@ -90,7 +90,6 @@ export async function loadWeekInput(
     fullName: (h.full_name as string) || 'Unnamed host',
     name: (h.full_name as string) || (h.id as string),
     tier: h.tier as Tier,
-    dailyCap: h.daily_cap as number,
     availability: [] as { date: string; start: string; end: string }[],
   }));
   const byId = new Map(hosts.map((h) => [h.id, h]));
