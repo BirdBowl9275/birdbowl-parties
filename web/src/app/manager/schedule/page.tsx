@@ -6,6 +6,7 @@ import { fairnessSummary, formatClock } from '@/lib/fairness';
 import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
+import { resolveHost } from '@/lib/host-resolution';
 import { PartyType } from '../../components/party-type';
 import { MessageBanner } from '../../components/message-banner';
 import { one } from '@/lib/admin-messages';
@@ -132,7 +133,10 @@ export default async function ManagerSchedulePage({
     previewInput && preview
       ? previewInput.parties.map((p) => {
           const a = preview!.assignments.find((x) => x.partyId === p.id);
-          const host = a ? previewInput!.hosts.find((h) => h.id === a.hostId) : undefined;
+          // Same rule as the save: a party the engine cannot cover keeps its eligible current host.
+          const eligible = new Set(previewInput!.hosts.map((h) => h.id));
+          const hostId = resolveHost(a?.hostId ?? null, p.assignedHost, eligible);
+          const host = hostId ? previewInput!.hosts.find((h) => h.id === hostId) : undefined;
           return { p, host };
         })
         // Display order only: by date, then start time. The engine data is untouched.
