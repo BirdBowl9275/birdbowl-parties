@@ -17,7 +17,8 @@ export const ARRIVAL_LEAD_MIN = 60;
 export const GAP_AFTER_PARTY_MIN = 30;
 
 // Times are "HH:MM" on the same calendar date.
-export type ShiftRow = { tier: 1 | 2 | 3; date: string; start: string; end: string };
+// endNextDay: the shift ends on the following calendar day (for example 5:00 PM to 2:00 AM).
+export type ShiftRow = { tier: 1 | 2 | 3; date: string; start: string; end: string; endNextDay?: boolean };
 
 // A party this hostess is already booked for. `arrival` is when she must be there.
 export type Booking = { date: string; arrival: string; end: string };
@@ -63,8 +64,13 @@ export function arrivalFor(party: Pick<PartyRequest, 'start' | 'isFirstOfDay'>):
   return toHHMM(toMinutes(party.start) - lead);
 }
 
-export function shiftHours(shift: Pick<ShiftRow, 'start' | 'end'>): number {
-  return (toMinutes(shift.end) - toMinutes(shift.start)) / 60;
+// Minutes from midnight of the shift's date. An overnight shift ends after 1440.
+export function shiftEndMinutes(shift: Pick<ShiftRow, 'end' | 'endNextDay'>): number {
+  return toMinutes(shift.end) + (shift.endNextDay ? 24 * 60 : 0);
+}
+
+export function shiftHours(shift: Pick<ShiftRow, 'start' | 'end' | 'endNextDay'>): number {
+  return (shiftEndMinutes(shift) - toMinutes(shift.start)) / 60;
 }
 
 export function weeklyHours(shifts: ShiftRow[]): number {
@@ -92,7 +98,7 @@ export function checkEligibility(candidate: Candidate, party: PartyRequest): Eli
   // Conflicts: front desk (2) or server (3) shifts that overlap the arrival-to-end window.
   for (const s of candidate.shifts) {
     if (s.date !== party.date || (s.tier !== 2 && s.tier !== 3)) continue;
-    if (overlaps(arrivalMin, endMin, toMinutes(s.start), toMinutes(s.end))) {
+    if (overlaps(arrivalMin, endMin, toMinutes(s.start), shiftEndMinutes(s))) {
       reasons.push(`Overlaps a ${s.tier === 2 ? 'front desk' : 'server'} shift (${s.start}–${s.end}).`);
       break;
     }
