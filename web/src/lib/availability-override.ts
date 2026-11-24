@@ -2,11 +2,19 @@
 // The database enforces the same rules (migration 0020): the flag must be on, and the person
 // must be an active tier-1 hostess. The database is the real protection; these checks give a clear message.
 
-export type TargetRow = { status: string | null; tier: number | null } | null;
+export type TargetRow = { status: string | null; role: string | null; tier: number | null } | null;
 
-// Only an active hostess (tier 1) can have availability entered by a manager.
+// Any active staff member with a tier (1, 2 or 3) can have availability entered by a manager.
+// Managers and admins are not staff and are never targets.
 export function isOverrideTarget(row: TargetRow): boolean {
-  return row !== null && row.status === 'active' && row.tier === 1;
+  return (
+    row !== null &&
+    row.status === 'active' &&
+    row.role === 'staff' &&
+    row.tier !== null &&
+    row.tier >= 1 &&
+    row.tier <= 3
+  );
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
