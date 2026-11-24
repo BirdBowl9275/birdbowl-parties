@@ -37,7 +37,8 @@ export default async function ManagerAvailabilityPage({
     .from('profiles')
     .select('id, full_name')
     .eq('status', 'active')
-    .eq('tier', 1)
+    .eq('role', 'staff')
+    .not('tier', 'is', null)
     .order('full_name');
   const hostesses = hostessRows ?? [];
 

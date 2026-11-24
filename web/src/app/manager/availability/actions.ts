@@ -30,12 +30,12 @@ export async function saveOverride(formData: FormData) {
 
   const { data: target, error: targetError } = await supabase
     .from('profiles')
-    .select('status, tier')
+    .select('status, role, tier')
     .eq('id', hostess)
     .maybeSingle();
   if (targetError) back(week, hostess, 'Could not save. Try again.');
-  if (!isOverrideTarget(target as { status: string | null; tier: number | null } | null)) {
-    back(week, hostess, 'That person is not an active hostess, so availability cannot be entered for them here.');
+  if (!isOverrideTarget(target as { status: string | null; role: string | null; tier: number | null } | null)) {
+    back(week, hostess, 'That person is not an active staff member, so availability cannot be entered for them here.');
   }
 
   const { data: existing, error: readError } = await supabase
