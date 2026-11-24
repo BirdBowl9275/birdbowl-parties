@@ -19,6 +19,7 @@ function linksForRole(role: string | null): NavLink[] {
         { href: '/admin/users', label: 'Users' },
         { href: '/admin/settings', label: 'Settings' },
         SCHEDULE,
+        ROSTER,
         PARTIES,
         MY_SCHEDULE,
       ];
