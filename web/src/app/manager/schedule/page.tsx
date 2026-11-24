@@ -175,7 +175,7 @@ export default async function ManagerSchedulePage({
           {p.assigned_host ? (
             <span className="pill pill-success">
               <Check />
-              Host assigned
+              Covered
             </span>
           ) : (
             <span className="pill pill-warning">
