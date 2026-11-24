@@ -22,6 +22,8 @@ type ScheduleRow = {
   customer_name: string | null;
   kids_count: number | null;
   notes: string | null;
+  // The party's own start. Differs from start_time only for a first party of the day (arrival).
+  party_start_time: string;
 };
 
 // Staff see their own time slots. Party details appear only after the morning reveal.
@@ -90,6 +92,9 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
                     {formatClock(r.start_time)} to {formatClock(r.end_time)}
                   </span>
                 </p>
+                {formatClock(r.party_start_time) !== formatClock(r.start_time) ? (
+                  <p className="staff-meta">Party starts {formatClock(r.party_start_time)}</p>
+                ) : null}
                 {r.revealed ? (
                   <div className="staff-body">
                     <p className="staff-who">
