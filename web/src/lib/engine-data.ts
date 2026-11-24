@@ -88,7 +88,6 @@ export async function loadWeekInput(
       type: p.party_type,
       fixed: p.assignment_locked || reveal,
       assignedHost: p.assigned_host,
-      keepHost: p.assigned_host !== null,
     };
   });
 
