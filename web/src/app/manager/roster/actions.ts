@@ -11,9 +11,9 @@ const CHUNK = 500;
 // Lower-case, single-spaced name. Used to match a roster name to an app account.
 const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
 
-function back(msg: string, counts?: { imported: number; skipped: number; invalid: number; unmatched: number }): never {
+function back(msg: string, counts?: { imported: number; skipped: number; invalid: number; discarded: number }): never {
   const extra = counts
-    ? `&imported=${counts.imported}&skipped=${counts.skipped}&invalid=${counts.invalid}&unmatched=${counts.unmatched}`
+    ? `&imported=${counts.imported}&skipped=${counts.skipped}&invalid=${counts.invalid}&discarded=${counts.discarded}`
     : '';
   redirect(`/manager/roster?msg=${encodeURIComponent(msg)}${extra}`);
 }
@@ -42,34 +42,41 @@ export async function importRoster(formData: FormData) {
     back(parsed.error === 'too_many_rows' ? 'too_many_rows' : 'empty_file');
   }
 
-  // Match each name to an active app account. An unmatched name is still stored, with no account
-  // attached, so it shows on the conflict report for a manager to fix.
+  // Keep a row only when its name matches an active hostess account exactly (ignoring case and extra
+  // spaces). A hostess is an active profile with a tier. Managers, admins, viewers and anyone without
+  // a tier are not hostesses, so their rows are discarded and counted. Nothing is linked by guessing.
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
     .select('id, full_name')
-    .eq('status', 'active');
+    .eq('status', 'active')
+    .not('tier', 'is', null);
   if (profilesError) back('import_failed');
   const idByName = new Map<string, string>();
   for (const p of profiles ?? []) {
     if (p.full_name) idByName.set(norm(p.full_name as string), p.id as string);
   }
 
-  const unmatched = new Set<string>();
-  const records = parsed.rows.map((r: RosterRow) => {
-    const profileId = idByName.get(norm(r.staffName)) ?? null;
-    if (!profileId) unmatched.add(r.staffName);
-    return {
-      source: 'hotschedules',
-      staff_name: r.staffName,
-      profile_id: profileId,
-      tier: r.tier,
-      shift_date: r.date,
-      start_time: r.start,
-      end_time: r.end,
-      end_next_day: r.endNextDay,
-      week_start: r.weekStart,
-      imported_by: user.id,
-    };
+  let discarded = 0;
+  const records = parsed.rows.flatMap((r: RosterRow) => {
+    const profileId = idByName.get(norm(r.staffName));
+    if (!profileId) {
+      discarded++;
+      return [];
+    }
+    return [
+      {
+        source: 'hotschedules',
+        staff_name: r.staffName,
+        profile_id: profileId,
+        tier: r.tier,
+        shift_date: r.date,
+        start_time: r.start,
+        end_time: r.end,
+        end_next_day: r.endNextDay,
+        week_start: r.weekStart,
+        imported_by: user.id,
+      },
+    ];
   });
 
   for (let i = 0; i < records.length; i += CHUNK) {
@@ -87,6 +94,6 @@ export async function importRoster(formData: FormData) {
     imported: records.length,
     skipped: parsed.skippedJobs,
     invalid: parsed.invalidRows,
-    unmatched: unmatched.size,
+    discarded,
   });
 }
