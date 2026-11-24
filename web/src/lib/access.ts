@@ -49,9 +49,10 @@ export function homePathForRole(role: string | null): string {
     case 'manager':
     case 'viewer':
       return '/manager/schedule';
-    // Staff land on availability first; saving it takes them to their schedule.
+    // Staff land on their schedule. If next week's availability is not in yet, the schedule
+    // page sends them to availability first.
     case 'staff':
-      return '/app/availability';
+      return '/app';
     default:
       return '/app';
   }

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatClock } from '@/lib/fairness';
-import { addDays, todayBusiness } from '@/lib/parties';
+import { addDays, todayBusiness, validWeekStart } from '@/lib/parties';
 import { PartyType } from '../components/party-type';
 import { releaseParty } from './release-actions';
 import { CircleAlert, Lock, LockOpen } from '../components/icons';
@@ -37,6 +37,24 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   if (!user) redirect('/login');
 
   const today = todayBusiness();
+
+  // Staff who have not entered next week's availability go there first. The same week the
+  // availability screen opens on by default. Once the week is locked, the screen can no longer be
+  // filled, so the redirect stops and the schedule shows as usual.
+  const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  if (me?.role === 'staff') {
+    const nextWeek = addDays(validWeekStart(undefined, today), 7);
+    const [{ data: locked }, { count }] = await Promise.all([
+      supabase.rpc('availability_locked', { p_week_start: nextWeek }),
+      supabase
+        .from('availability')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_id', user.id)
+        .eq('week_start', nextWeek),
+    ]);
+    if (locked !== true && (count ?? 0) === 0) redirect('/app/availability');
+  }
+
   const { data, error } = await supabase.rpc('my_schedule', {
     p_from: today,
     p_to: addDays(today, 14),
