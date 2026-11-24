@@ -146,7 +146,7 @@ export default async function ManagerSchedulePage({
       ) : (
         <span className="pill pill-danger">
           <TriangleAlert />
-          No eligible host
+          Find a hostess
         </span>
       )}
       {fixed ? (
@@ -180,7 +180,7 @@ export default async function ManagerSchedulePage({
           ) : (
             <span className="pill pill-warning">
               <CircleAlert />
-              Not assigned
+              Find a hostess
             </span>
           )}
           {p.assignment_locked ? (
@@ -329,7 +329,7 @@ export default async function ManagerSchedulePage({
                     {infoCells(p)}
                     <div role="cell" className="pcell pcell-host">
                       <span className="plabel" aria-hidden="true">Host</span>
-                      {p.assigned_host ? hostName.get(p.assigned_host) ?? 'Assigned host' : 'Not assigned'}
+                      {p.assigned_host ? hostName.get(p.assigned_host) ?? 'Assigned host' : 'Find a hostess'}
                     </div>
                     <div role="cell" className="pcell pcell-lock">
                       <span className="plabel" aria-hidden="true">Lock</span>
