@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { daysFromForm, parseAvailability } from '@/lib/availability';
 import { todayBusiness, validWeekStart } from '@/lib/parties';
 import { DUPLICATE_KEY } from '@/lib/availability-submission';
+import { hoursFromSettings } from '@/lib/business-hours';
 
 function back(week: string, message: string): never {
   redirect(`/app/availability?week=${encodeURIComponent(week)}&msg=${encodeURIComponent(message)}`);
@@ -27,7 +28,14 @@ export async function saveAvailability(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const parsed = parseAvailability(daysFromForm((name) => field(formData, name)));
+  // The All day tick uses the business opening times from settings (falls back to the defaults).
+  const { data: hourRows } = await supabase
+    .from('settings')
+    .select('key, value')
+    .in('key', ['business_open_weekday', 'business_open_weekend']);
+  const hours = hoursFromSettings(new Map((hourRows ?? []).map((r) => [r.key as string, r.value])));
+
+  const parsed = parseAvailability(daysFromForm((name) => field(formData, name), hours));
   if (!parsed.ok) back(week, parsed.error);
 
   const { data: locked, error: lockError } = await supabase.rpc('availability_locked', { p_week_start: week });

@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DAY_NAMES } from '@/lib/availability';
 import { addDays, todayBusiness, validWeekStart } from '@/lib/parties';
 import { formatClock } from '@/lib/fairness';
+import { allDayWindow, hoursFromSettings } from '@/lib/business-hours';
 import { saveAvailability } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +41,10 @@ export default async function AvailabilityPage({
     : addDays(validWeekStart(undefined, today), 7);
 
   const [settingsRes, lockRes, mineRes] = await Promise.all([
-    supabase.from('settings').select('key, value').in('key', ['availability_cutoff_dow', 'availability_cutoff_time']),
+    supabase
+      .from('settings')
+      .select('key, value')
+      .in('key', ['availability_cutoff_dow', 'availability_cutoff_time', 'business_open_weekday', 'business_open_weekend']),
     supabase.rpc('availability_locked', { p_week_start: monday }),
     supabase.from('availability').select('day_of_week, start_time, end_time').eq('profile_id', user.id).eq('week_start', monday),
   ]);
@@ -51,6 +55,7 @@ export default async function AvailabilityPage({
   // Same rule as the database: the cutoff day falls in the week before this one.
   const cutoffDay = addDays(monday, cutoffDow - 1 - 7);
   const cutoffLabel = `${longDate(cutoffDay)} at ${formatClock(cutoffTime)} Eastern`;
+  const hours = hoursFromSettings(settings);
 
   const locked = lockRes.error ? false : lockRes.data === true;
   const mine = new Map(
@@ -99,7 +104,7 @@ export default async function AvailabilityPage({
               </label>
               <label className="check">
                 <input type="checkbox" name={`allday-${day}`} />
-                All day (opening to 11:59 p.m.)
+                All day ({formatClock(allDayWindow(day, hours).start)} to 11:59 p.m.)
               </label>
               <div className="fields">
                 <div>
