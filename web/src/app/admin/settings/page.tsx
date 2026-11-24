@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/admin-guard';
-import { updateSetting } from '../actions';
+import { saveOverrideFlags, updateSetting } from '../actions';
 import { AdminBanner } from '../admin-banner';
 import { one } from '@/lib/admin-messages';
 
@@ -85,6 +85,13 @@ export default async function AdminSettingsPage({
   const { data } = await supabase.from('settings').select('key, value').order('key');
   const values = new Map((data ?? []).map((r) => [r.key as string, r.value]));
 
+  const { data: managers } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, can_enter_availability')
+    .eq('status', 'active')
+    .in('role', ['manager', 'admin'])
+    .order('full_name');
+
   return (
     <section className="sched admin admin-settings" aria-labelledby="settings-title">
       <div className="sched-head">
@@ -126,6 +133,46 @@ export default async function AdminSettingsPage({
           </section>
         );
       })}
+
+      <section className="panel admin-group" aria-labelledby="g-overrides">
+        <h2 id="g-overrides">Availability override</h2>
+        <p className="group-blurb">
+          Tick the managers and admins who may enter availability for an active hostess who did not submit it.
+          Every change is logged.
+        </p>
+        <form action={saveOverrideFlags}>
+          <table className="data">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Role</th>
+                <th scope="col">Can enter availability</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(managers ?? []).map((p) => (
+                <tr key={p.id as string}>
+                  <td>{(p.full_name as string | null) ?? 'Unnamed'}</td>
+                  <td>{p.role as string}</td>
+                  <td>
+                    <label>
+                      <input
+                        type="checkbox"
+                        name={`override-${p.id as string}`}
+                        defaultChecked={Boolean(p.can_enter_availability)}
+                      />
+                      <span className="vh">Can enter availability for {(p.full_name as string | null) ?? 'this person'}</span>
+                    </label>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button type="submit" className="btn-secondary">
+            Save override settings
+          </button>
+        </form>
+      </section>
     </section>
   );
 }
