@@ -26,8 +26,6 @@ function linksForRole(role: string | null): NavLink[] {
     case 'viewer':
       // Read-only: schedule and parties list. Viewers are not hosts, so no "My schedule".
       return [SCHEDULE, PARTIES];
-    case 'sales':
-      return [PARTIES, MY_SCHEDULE];
     default:
       return [MY_SCHEDULE];
   }

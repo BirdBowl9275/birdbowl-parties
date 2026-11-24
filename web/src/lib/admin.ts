@@ -3,7 +3,7 @@ import type { AdminMessageCode } from './admin-messages';
 // Validation for admin changes. Pure functions, so they can be unit tested.
 // The database still enforces who may make each change (RLS and the guard trigger).
 
-export const ROLES = ['staff', 'sales', 'viewer', 'manager', 'admin'] as const;
+export const ROLES = ['staff', 'viewer', 'manager', 'admin'] as const;
 export const STATUSES = ['pending', 'active', 'removed'] as const;
 export type Role = (typeof ROLES)[number];
 export type Status = (typeof STATUSES)[number];

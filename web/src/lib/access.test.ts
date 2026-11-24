@@ -5,7 +5,6 @@ describe('homePathForRole', () => {
   it('sends each role to its own screen', () => {
     expect(homePathForRole('admin')).toBe('/admin/users');
     expect(homePathForRole('manager')).toBe('/manager/schedule');
-    expect(homePathForRole('sales')).toBe('/sales/parties');
     expect(homePathForRole('viewer')).toBe('/manager/schedule');
   });
 
