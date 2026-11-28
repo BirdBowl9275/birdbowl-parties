@@ -16,6 +16,11 @@ function back(week: string, code: ScheduleCode): never {
   redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${code}`);
 }
 
+// After a row is saved, the page gets the party id so that row's Save button turns green.
+function backSaved(week: string, code: ScheduleCode, partyId: string): never {
+  redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${code}&saved=${encodeURIComponent(partyId)}`);
+}
+
 // Count messages always carry their number.
 function backCount(week: string, code: 'assignments_saved' | 'assignments_stopped', n: number): never {
   redirect(`/manager/schedule?week=${encodeURIComponent(week)}&msg=${code}&n=${n}`);
@@ -98,9 +103,9 @@ export async function reassignParty(formData: FormData) {
     .select('id');
   if (error) back(week, 'assignment_failed');
   if (!data || data.length === 0) back(week, 'party_not_found');
-  if (overridingShift) back(week, 'assignment_saved_shift_override');
-  if (unavailable) back(week, 'assignment_saved_unavailable');
-  back(week, 'assignment_saved');
+  if (overridingShift) backSaved(week, 'assignment_saved_shift_override', partyId);
+  if (unavailable) backSaved(week, 'assignment_saved_unavailable', partyId);
+  backSaved(week, 'assignment_saved', partyId);
 }
 
 type Db = Awaited<ReturnType<typeof requireManager>>['supabase'];
