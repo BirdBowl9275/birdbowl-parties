@@ -39,9 +39,10 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
 
   const today = todayBusiness();
 
-  // Staff who have not submitted next week's availability go there first. The same week the
-  // availability screen opens on by default. A submission counts even when no windows were entered.
-  // Once the week is locked, the screen can no longer be filled, so the redirect stops.
+  // Staff who have not submitted next week's availability see a banner with a link. The schedule
+  // always shows, so a party someone is booked for is never hidden behind the availability screen.
+  // A submission counts even when no windows were entered. Once the week is locked, the banner stops.
+  let needsNextWeek = false;
   const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (me?.role === 'staff') {
     const nextWeek = addDays(validWeekStart(undefined, today), 7);
@@ -53,9 +54,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         .eq('profile_id', user.id)
         .eq('week_start', nextWeek),
     ]);
-    if (needsAvailabilityFirst({ locked: locked === true, submitted: (count ?? 0) > 0 })) {
-      redirect('/app/availability');
-    }
+    needsNextWeek = needsAvailabilityFirst({ locked: locked === true, submitted: (count ?? 0) > 0 });
   }
 
   const { data, error } = await supabase.rpc('my_schedule', {
@@ -78,6 +77,11 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
       {msg ? (
         <p role="status" className="muted">
           {msg}
+        </p>
+      ) : null}
+      {needsNextWeek ? (
+        <p role="status" className="banner">
+          You have not entered next week&apos;s availability yet. <Link href="/app/availability">Enter it now</Link>
         </p>
       ) : null}
       <div className="staff-head">
