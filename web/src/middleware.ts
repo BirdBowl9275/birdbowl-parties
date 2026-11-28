@@ -11,6 +11,11 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Supabase is not configured', { status: 500 });
   }
 
+  // The scheduler's cron call has no signed-in user. The route checks its own secret token instead.
+  if (request.nextUrl.pathname.startsWith('/api/cron/')) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {
     cookies: {
