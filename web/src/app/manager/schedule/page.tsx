@@ -101,12 +101,18 @@ export default async function ManagerSchedulePage({
           .eq('status', 'active')
           .not('tier', 'is', null)
           .order('full_name'),
-    supabase.from('settings').select('value').eq('key', 'fairness_window_days').maybeSingle(),
+    supabase.from('settings').select('key, value').in('key', ['fairness_window_days', 'reveal_time']),
   ]);
 
   const parties = (partiesRes.data ?? []) as PartyRow[];
   const hosts = (hostsRes.data ?? []) as HostRow[];
-  const windowDays = Number(settingRes.data?.value ?? 30);
+  const settingValues = new Map((settingRes.data ?? []).map((r) => [r.key as string, r.value]));
+  const windowDays = Number(settingValues.get('fairness_window_days') ?? 30);
+  // A party is revealed (and so fixed) from the reveal time on its day, the same rule as the engine.
+  const revealTime = String(settingValues.get('reveal_time') ?? '08:00').replace(/"/g, '');
+  const nowClock = nowClockBusiness();
+  const isLocked = (p: PartyRow) =>
+    p.assignment_locked || p.party_date < today || (p.party_date === today && nowClock >= revealTime);
   const hostName = new Map(hosts.map((h) => [h.id, h.full_name || 'Unnamed host']));
 
   // Fairness summary: parties and kids per host over the window ending today.
@@ -183,7 +189,7 @@ export default async function ManagerSchedulePage({
               Find a hostess
             </span>
           )}
-          {p.assignment_locked ? (
+          {isLocked(p) ? (
             <span className="pill pill-neutral">
               <Lock />
               Locked
@@ -333,7 +339,7 @@ export default async function ManagerSchedulePage({
                     </div>
                     <div role="cell" className="pcell pcell-lock">
                       <span className="plabel" aria-hidden="true">Lock</span>
-                      {p.assignment_locked ? 'Locked' : <span className="muted">Not locked</span>}
+                      {isLocked(p) ? 'Locked' : <span className="muted">Not locked</span>}
                     </div>
                   </div>
                 ) : (
