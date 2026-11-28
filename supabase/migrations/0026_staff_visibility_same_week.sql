@@ -3,10 +3,11 @@
 -- availability cutoff of the SAME schedule week (Wednesday 8:00 p.m. Eastern),
 -- not the week before. Matches migration 0025, which changed the lock rule.
 --
--- Only visible_from changes. Details still show at the reveal time (8:00 a.m.
--- on the day of the party), or sooner if the party is locked.
+-- Only visible_from changes. The return columns match migration 0017, including
+-- party_start_time. Details still show at the reveal time (8:00 a.m. on the day
+-- of the party), or sooner if the party is locked.
 --
--- Rollback: re-run the my_schedule function from 0016_arrival_time_on_schedule.sql.
+-- Rollback: re-run the my_schedule function from 0017_party_start_on_schedule.sql.
 -- ============================================================================
 
 create or replace function public.my_schedule(
@@ -14,15 +15,16 @@ create or replace function public.my_schedule(
   p_to   date default current_date + 14
 )
 returns table (
-  party_id      bigint,
-  party_date    date,
-  start_time    time,
-  end_time      time,
-  revealed      boolean,
-  party_type    public.party_type,
-  customer_name text,
-  kids_count    smallint,
-  notes         text
+  party_id         bigint,
+  party_date       date,
+  start_time       time,
+  end_time         time,
+  revealed         boolean,
+  party_type       public.party_type,
+  customer_name    text,
+  kids_count       smallint,
+  notes            text,
+  party_start_time time
 )
 language sql
 stable
@@ -62,7 +64,8 @@ as $$
          case when s.is_revealed then s.party_type    end,
          case when s.is_revealed then s.customer_name end,
          case when s.is_revealed then s.kids_count    end,
-         case when s.is_revealed then s.notes         end
+         case when s.is_revealed then s.notes         end,
+         s.start_time
   from shown s
   order by s.party_date, s.start_time
 $$;
