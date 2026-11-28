@@ -7,6 +7,7 @@ import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } fr
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
 import { PartyType } from '../../components/party-type';
+import { AssignRow } from './assign-row';
 import { MessageBanner } from '../../components/message-banner';
 import { one } from '@/lib/admin-messages';
 import { scheduleBanner } from '@/lib/page-messages';
@@ -59,7 +60,9 @@ export default async function ManagerSchedulePage({
 }) {
   const sp = await searchParams;
   // Single values only: a repeated key arrives as a list (security review WEB-BULK-07).
-  const [weekParam, msg, previewParam, n] = [sp.week, sp.msg, sp.preview, sp.n].map(one);
+  const [weekParam, msg, previewParam, n, savedParam] = [sp.week, sp.msg, sp.preview, sp.n, sp.saved].map(one);
+  // The party whose row was just saved (set by the save action). Its Save button turns green.
+  const savedId = savedParam && /^\d+$/.test(savedParam) ? savedParam : null;
   // Managers and admins can edit; viewers (read-only) see the same week without any controls.
   // Every write action still calls requireManager(), and RLS blocks viewer writes.
   const { supabase, readOnly } = await requireScheduleView();
@@ -343,7 +346,7 @@ export default async function ManagerSchedulePage({
                     </div>
                   </div>
                 ) : (
-                  <form key={p.id} action={reassignParty} role="row" className="prow" aria-label={`Assign ${p.customer_name}`}>
+                  <AssignRow key={p.id} action={reassignParty} label={`Assign ${p.customer_name}`} savedHere={savedId === String(p.id)}>
                     <input type="hidden" name="party_id" value={p.id} />
                     <input type="hidden" name="week" value={monday} />
                     {infoCells(p)}
@@ -370,10 +373,7 @@ export default async function ManagerSchedulePage({
                         <span className="txt">Override schedule conflict</span>
                       </label>
                     </div>
-                    <div role="cell" className="pcell pcell-save">
-                      <button type="submit" className="secondary btn-secondary">Save<span className="vh"> assignment</span></button>
-                    </div>
-                  </form>
+                  </AssignRow>
                 ))}
                 </div>
                 ) : null}
