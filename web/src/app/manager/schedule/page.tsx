@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireScheduleView } from '@/lib/manager-guard';
-import { reassignParty, saveProposedAssignments } from '../actions';
+import { saveProposedAssignments } from '../actions';
 import { fairnessSummary, formatClock } from '@/lib/fairness';
 import { addDays, nowClockBusiness, todayBusiness, validWeekStart, weekDays } from '@/lib/parties';
 import { assignWeek } from '@/lib/engine';
 import { loadWeekInput } from '@/lib/engine-data';
 import { PartyType } from '../../components/party-type';
-import { AssignRow } from './assign-row';
+import { WeekAssignForm } from './week-assign-form';
 import { MessageBanner } from '../../components/message-banner';
 import { one } from '@/lib/admin-messages';
 import { scheduleBanner } from '@/lib/page-messages';
@@ -60,9 +60,9 @@ export default async function ManagerSchedulePage({
 }) {
   const sp = await searchParams;
   // Single values only: a repeated key arrives as a list (security review WEB-BULK-07).
-  const [weekParam, msg, previewParam, n, savedParam] = [sp.week, sp.msg, sp.preview, sp.n, sp.saved].map(one);
-  // The party whose row was just saved (set by the save action). Its Save button turns green.
-  const savedId = savedParam && /^\d+$/.test(savedParam) ? savedParam : null;
+  const [weekParam, msg, previewParam, n] = [sp.week, sp.msg, sp.preview, sp.n].map(one);
+  // The week's Save button turns green only when the last save went through in full.
+  const justSaved = msg === 'week_saved' || msg === 'week_saved_unavailable';
   // Managers and admins can edit; viewers (read-only) see the same week without any controls.
   // Every write action still calls requireManager(), and RLS blocks viewer writes.
   const { supabase, readOnly } = await requireScheduleView();
@@ -317,6 +317,7 @@ export default async function ManagerSchedulePage({
             <span>Lock</span>
             <span />
           </div>
+          <WeekAssignForm week={monday} readOnly={readOnly} justSaved={justSaved}>
           {days.map((day) => {
             const dayParties = parties.filter((p) => p.party_date === day);
             return (
@@ -346,13 +347,11 @@ export default async function ManagerSchedulePage({
                     </div>
                   </div>
                 ) : (
-                  <AssignRow key={p.id} action={reassignParty} label={`Assign ${p.customer_name}`} savedHere={savedId === String(p.id)}>
-                    <input type="hidden" name="party_id" value={p.id} />
-                    <input type="hidden" name="week" value={monday} />
+                  <div key={p.id} role="row" className="prow" aria-label={`Assign ${p.customer_name}`}>
                     {infoCells(p)}
                     <label role="cell" className="pcell pcell-host">
                       <span className="plabel">Host</span>
-                      <select name="host_id" defaultValue={p.assigned_host ?? ''}>
+                      <select name={`host_${p.id}`} defaultValue={p.assigned_host ?? ''}>
                         <option value="">Not assigned</option>
                         {hosts.map((h) => (
                           <option key={h.id} value={h.id}>
@@ -363,23 +362,24 @@ export default async function ManagerSchedulePage({
                     </label>
                     <div role="cell" className="pcell pcell-lock">
                       <label className="lockchip">
-                        <input type="checkbox" name="locked" defaultChecked={p.assignment_locked} />
+                        <input type="checkbox" name={`locked_${p.id}`} defaultChecked={p.assignment_locked} />
                         <span className="ic-off" aria-hidden="true"><LockOpen /></span>
                         <span className="ic-on" aria-hidden="true"><Lock /></span>
                         <span className="txt">Lock<span className="hide-lg"> by hand</span></span>
                       </label>
                       <label className="lockchip">
-                        <input type="checkbox" name="override_shift" />
+                        <input type="checkbox" name={`override_${p.id}`} />
                         <span className="txt">Override schedule conflict</span>
                       </label>
                     </div>
-                  </AssignRow>
+                  </div>
                 ))}
                 </div>
                 ) : null}
               </div>
             );
           })}
+          </WeekAssignForm>
         </div>
 
         <aside className="sched-rail" aria-labelledby="fairness-title">

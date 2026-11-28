@@ -49,6 +49,16 @@ export const SCHEDULE_MESSAGES = {
     tone: 'error',
     text: 'Assignment saved, but she has no availability marked for that time. Check with her before the party.',
   },
+  // One Save for the whole week.
+  week_saved: { tone: 'success', text: 'Schedule saved.' },
+  week_saved_unavailable: {
+    tone: 'error',
+    text: 'Schedule saved, but some hostesses have no availability marked for their party. Check with them before the party.',
+  },
+  week_partial: {
+    tone: 'error',
+    text: 'Some changes were not saved. A hostess overlaps a shift without the override box, or a locked party has no host. Fix those rows and save again.',
+  },
 } as const satisfies Table;
 
 export type SalesCode = keyof typeof SALES_MESSAGES;
