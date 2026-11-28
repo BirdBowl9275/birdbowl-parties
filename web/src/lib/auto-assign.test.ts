@@ -10,6 +10,10 @@ describe('isAutoRunWindow', () => {
     expect(isAutoRunWindow(new Date('2026-07-23T00:30:00Z'))).toBe(true);
   });
 
+  it('is true at 9:30 p.m. Eastern on Wednesday (summer, cron at 01:00 UTC is 9 p.m.)', () => {
+    expect(isAutoRunWindow(new Date('2026-11-26T02:30:00Z'))).toBe(true);
+  });
+
   it('is false at 7:59 p.m. Eastern on Wednesday', () => {
     expect(isAutoRunWindow(new Date('2026-11-26T00:59:00Z'))).toBe(false);
   });

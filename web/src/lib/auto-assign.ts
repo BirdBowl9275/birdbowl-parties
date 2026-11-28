@@ -7,8 +7,9 @@ import { addDays } from './parties';
 
 const NY = 'America/New_York';
 
-// True in the Wednesday 8 p.m. hour, Eastern time. The cron fires at two UTC hours so that both
-// daylight and standard time are covered, and this check lets only one of them run.
+// True on Wednesday from 8 p.m. Eastern to midnight. The cron runs once a day, on Thursday at
+// 01:00 UTC, which is 8 p.m. Eastern in winter and 9 p.m. in summer. Either way it falls inside
+// the window, and the cron runs only once a week.
 export function isAutoRunWindow(now: Date): boolean {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: NY,
@@ -18,7 +19,7 @@ export function isAutoRunWindow(now: Date): boolean {
   }).formatToParts(now);
   const weekday = parts.find((p) => p.type === 'weekday')?.value;
   const hour = parts.find((p) => p.type === 'hour')?.value;
-  return weekday === 'Wed' && hour === '20';
+  return weekday === 'Wed' && Number(hour) >= 20;
 }
 
 // Thursday, Friday, Saturday and Sunday of the week that starts on `monday`.
