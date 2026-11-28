@@ -1,5 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/assign-week", "schedule": "0 0,1 * * 4" }
+    { "path": "/api/cron/assign-week", "schedule": "0 1 * * 4" }
   ]
 }

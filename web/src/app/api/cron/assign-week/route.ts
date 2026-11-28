@@ -6,8 +6,8 @@ import { assignWeek } from '@/lib/engine';
 import { nowClockBusiness, todayBusiness, validWeekStart } from '@/lib/parties';
 import { autoRunDays, isAutoRunWindow } from '@/lib/auto-assign';
 
-// Runs the assignment for Thursday to Sunday of the current schedule week at 8:00 p.m. Eastern on
-// Wednesday (see vercel.json). Vercel sends "Authorization: Bearer <CRON_SECRET>". Anything else
+// Runs the assignment for Thursday to Sunday of the current schedule week, from 8:00 p.m. Eastern on
+// Wednesday (see vercel.json; the cron runs once a week). Vercel sends "Authorization: Bearer <CRON_SECRET>". Anything else
 // gets a 404, so the endpoint does not reveal that it exists.
 //
 // It uses the service-role client, because no manager is signed in during a cron run. It saves only
