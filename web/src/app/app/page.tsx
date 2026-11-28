@@ -27,8 +27,10 @@ type ScheduleRow = {
   party_start_time: string;
 };
 
-// Staff see their own time slots. Party details appear only after the morning reveal.
-// The my_schedule function enforces both rules in the database.
+type DayGroup = { date: string; rows: ScheduleRow[] };
+
+// Staff see their own time slots, this week first, then next week. Party details appear only after
+// the morning reveal. The my_schedule function enforces both rules in the database.
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   const { msg } = await searchParams;
   const supabase = await createSupabaseServerClient();
@@ -38,6 +40,9 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   if (!user) redirect('/login');
 
   const today = todayBusiness();
+  const monday = validWeekStart(undefined, today);
+  const sunday = addDays(monday, 6);
+  const nextMonday = addDays(monday, 7);
 
   // Staff who have not submitted next week's availability see a banner with a link. The schedule
   // always shows, so a party someone is booked for is never hidden behind the availability screen.
@@ -45,32 +50,92 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   let needsNextWeek = false;
   const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (me?.role === 'staff') {
-    const nextWeek = addDays(validWeekStart(undefined, today), 7);
     const [{ data: locked }, { count }] = await Promise.all([
-      supabase.rpc('availability_locked', { p_week_start: nextWeek }),
+      supabase.rpc('availability_locked', { p_week_start: nextMonday }),
       supabase
         .from('availability_submissions')
         .select('profile_id', { count: 'exact', head: true })
         .eq('profile_id', user.id)
-        .eq('week_start', nextWeek),
+        .eq('week_start', nextMonday),
     ]);
     needsNextWeek = needsAvailabilityFirst({ locked: locked === true, submitted: (count ?? 0) > 0 });
   }
 
+  // This week and next week in one call: from Monday of this week through Sunday of next week.
   const { data, error } = await supabase.rpc('my_schedule', {
-    p_from: today,
-    p_to: addDays(today, 14),
+    p_from: monday,
+    p_to: addDays(monday, 13),
   });
   const rows = (data ?? []) as ScheduleRow[];
 
   // Group by day, keeping the order the database returned. Display only.
-  const days: { date: string; rows: ScheduleRow[] }[] = [];
+  const days: DayGroup[] = [];
   for (const r of rows) {
     const last = days[days.length - 1];
     if (last && last.date === r.party_date) last.rows.push(r);
     else days.push({ date: r.party_date, rows: [r] });
   }
+  const thisWeek = days.filter((d) => d.date <= sunday);
+  const nextWeek = days.filter((d) => d.date >= nextMonday);
   const tomorrow = addDays(today, 1);
+
+  const renderDay = (day: DayGroup) => (
+    <div key={day.date} className="day-group staff-day">
+      <h3 id={`day-${day.date}`}>
+        {day.date === today ? <><span className="staff-when">Today</span><span className="vh">, </span></> : null}
+        {day.date === tomorrow ? <><span className="staff-when">Tomorrow</span><span className="vh">, </span></> : null}
+        <span className="staff-date">{weekdayLabel(day.date)}</span>
+      </h3>
+      <ul className="staff-list" aria-labelledby={`day-${day.date}`}>
+        {day.rows.map((r) => (
+          <li key={r.party_id} className="staff-item">
+            <p className="staff-time num">
+              <span className="vh">
+                Party, {weekdayLabel(r.party_date)} {formatClock(r.start_time)} to {formatClock(r.end_time)}
+              </span>
+              <span aria-hidden="true">
+                {formatClock(r.start_time)} to {formatClock(r.end_time)}
+              </span>
+            </p>
+            {formatClock(r.party_start_time) !== formatClock(r.start_time) ? (
+              <p className="staff-meta">Party starts {formatClock(r.party_start_time)}</p>
+            ) : null}
+            {r.revealed ? (
+              <div className="staff-body">
+                <p className="staff-who">
+                  <strong>{r.customer_name}</strong>
+                  <span className="pill pill-success">
+                    <LockOpen />
+                    Details shown
+                  </span>
+                </p>
+                <p className="staff-meta">
+                  <span className="num">{r.kids_count} kids</span> · <PartyType type={r.party_type} />
+                </p>
+                {r.notes ? <p className="staff-notes">{r.notes}</p> : null}
+              </div>
+            ) : (
+              <div className="staff-body">
+                <p className="staff-who">
+                  <span className="pill pill-neutral">
+                    <Lock />
+                    Details hidden
+                  </span>
+                </p>
+                <p className="staff-meta">Details shown at 8:00 a.m. on the day of the party.</p>
+              </div>
+            )}
+            <form action={releaseParty} className="staff-release">
+              <input type="hidden" name="party_id" value={r.party_id} />
+              <button type="submit" className="secondary">
+                Release this party
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <section className="staff" aria-labelledby="app-title">
@@ -86,7 +151,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
       ) : null}
       <div className="staff-head">
         <h1 id="app-title">Your schedule</h1>
-        <p className="muted">Your party time slots for the next two weeks. Party details appear at 8:00 a.m. on the day of each party, or right away once a manager locks the assignment.</p>
+        <p className="muted">Party details appear at 8:00 a.m. on the day of each party, or right away once a manager locks the assignment.</p>
         <p>
           <Link href="/app/availability">Set my availability</Link>
         </p>
@@ -97,65 +162,18 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
           <span>Could not load your schedule.</span>
         </div>
       ) : null}
-      {!error && rows.length === 0 ? <p className="empty">No upcoming parties.</p> : null}
 
-      {days.map((day) => (
-        <div key={day.date} className="day-group staff-day">
-          <h2 id={`day-${day.date}`}>
-            {day.date === today ? <><span className="staff-when">Today</span><span className="vh">, </span></> : null}
-            {day.date === tomorrow ? <><span className="staff-when">Tomorrow</span><span className="vh">, </span></> : null}
-            <span className="staff-date">{weekdayLabel(day.date)}</span>
-          </h2>
-          <ul className="staff-list" aria-labelledby={`day-${day.date}`}>
-            {day.rows.map((r) => (
-              <li key={r.party_id} className="staff-item">
-                <p className="staff-time num">
-                  <span className="vh">
-                    Party, {weekdayLabel(r.party_date)} {formatClock(r.start_time)} to {formatClock(r.end_time)}
-                  </span>
-                  <span aria-hidden="true">
-                    {formatClock(r.start_time)} to {formatClock(r.end_time)}
-                  </span>
-                </p>
-                {formatClock(r.party_start_time) !== formatClock(r.start_time) ? (
-                  <p className="staff-meta">Party starts {formatClock(r.party_start_time)}</p>
-                ) : null}
-                {r.revealed ? (
-                  <div className="staff-body">
-                    <p className="staff-who">
-                      <strong>{r.customer_name}</strong>
-                      <span className="pill pill-success">
-                        <LockOpen />
-                        Details shown
-                      </span>
-                    </p>
-                    <p className="staff-meta">
-                      <span className="num">{r.kids_count} kids</span> · <PartyType type={r.party_type} />
-                    </p>
-                    {r.notes ? <p className="staff-notes">{r.notes}</p> : null}
-                  </div>
-                ) : (
-                  <div className="staff-body">
-                    <p className="staff-who">
-                      <span className="pill pill-neutral">
-                        <Lock />
-                        Details hidden
-                      </span>
-                    </p>
-                    <p className="staff-meta">Details shown at 8:00 a.m. on the day of the party.</p>
-                  </div>
-                )}
-                <form action={releaseParty} className="staff-release">
-                  <input type="hidden" name="party_id" value={r.party_id} />
-                  <button type="submit" className="secondary">
-                    Release this party
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <section aria-labelledby="this-week-title">
+        <h2 id="this-week-title">This week</h2>
+        {!error && thisWeek.length === 0 ? <p className="empty">No parties this week.</p> : null}
+        {thisWeek.map(renderDay)}
+      </section>
+
+      <section aria-labelledby="next-week-title">
+        <h2 id="next-week-title">Next week</h2>
+        {!error && nextWeek.length === 0 ? <p className="empty">No parties next week.</p> : null}
+        {nextWeek.map(renderDay)}
+      </section>
 
       <form action="/auth/signout" method="post" className="staff-signout">
         <button type="submit" className="btn btn-secondary">
